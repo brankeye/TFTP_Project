@@ -13,9 +13,9 @@ public class NetworkConnector {
 	private DatagramSocket socket;
 	private boolean        tempSendSocket; // if true, the sending socket will be closed after
 	
-	public NetworkConnector(boolean tempSendSocket) {
+	public NetworkConnector() {
 		initializeSocket();
-		this.tempSendSocket = tempSendSocket;
+		this.tempSendSocket = false;
 	}
 	
 	public NetworkConnector(int receivingPort, boolean tempSendSocket) {

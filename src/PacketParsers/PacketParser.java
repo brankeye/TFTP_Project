@@ -1,10 +1,7 @@
-package General;
+package PacketParsers;
 import NetworkTypes.Operation;
 
-public class PacketManager {
-	// TODO: handle encoding/decoding of packets
-	// TODO: read from packets
-	private boolean quiet_mode_enabled = true;
+public class PacketParser {
 	
 	public static Operation getOpcode(byte[] data) {
 		if(data == null || data.length < 2) { return Operation.INVALID; }
