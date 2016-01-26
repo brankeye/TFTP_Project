@@ -1,3 +1,5 @@
+package Main;
+import General.NetworkConnector;
 
 public class ErrorSimulator {
 

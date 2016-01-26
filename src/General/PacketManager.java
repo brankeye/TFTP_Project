@@ -1,3 +1,5 @@
+package General;
+import NetworkTypes.Operation;
 
 public class PacketManager {
 	// TODO: handle encoding/decoding of packets

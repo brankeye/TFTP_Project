@@ -1,3 +1,4 @@
+package NetworkTypes;
 
 public enum Operation {
 	INVALID,

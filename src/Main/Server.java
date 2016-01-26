@@ -1,3 +1,6 @@
+package Main;
+import General.NetworkConnector;
+
 /*For each RRQ, the server should respond with DATA block 1 and 0 bytes of data (no file I/O). 
 For each WRQ the server should respond with ACK block 0.
 
