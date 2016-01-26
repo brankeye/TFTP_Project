@@ -1,4 +1,5 @@
 package Main;
+import General.Config;
 import General.NetworkConnector;
 
 /*For each RRQ, the server should respond with DATA block 1 and 0 bytes of data (no file I/O). 
@@ -17,7 +18,7 @@ You can have additional threads in the client and server, as long as you can jus
 public class Server {
 	
 	// can send and receive packets (is meant to replace manual sockets!)
-	NetworkConnector networkConnector = new NetworkConnector(NetworkConnector.serverPort, true);
+	NetworkConnector networkConnector = new NetworkConnector(Config.SERVER_PORT, true);
 	
 	public Server() {}
 	

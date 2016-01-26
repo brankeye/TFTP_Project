@@ -3,15 +3,12 @@ import java.io.*;
 import java.net.*;
 
 /* Public Functions
- * receive(DatagramPacket)
+ * receive() - returns a DatagramPacket
  * send(DatagramPacket)
  * close()
  */
 
 public class NetworkConnector {
-	
-	public static int      errorSimPort = 68;
-	public static int      serverPort   = 69;
 	
 	private DatagramSocket socket;
 	private boolean        tempSendSocket; // if true, the sending socket will be closed after
@@ -26,7 +23,11 @@ public class NetworkConnector {
 		this.tempSendSocket = tempSendSocket;
 	}
 	
-	public void receive(DatagramPacket receivePacket) {
+	// TODO: test if this actually returns a packet sucessfully
+	public DatagramPacket receive() {
+		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
+		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
+		
 		try {
 			socket.receive(receivePacket);
 		} catch (IOException e) {
@@ -35,6 +36,8 @@ public class NetworkConnector {
 			e.printStackTrace();
 			System.exit(1);
 		}
+		
+		return receivePacket;
 	}
 	
 	public void send(DatagramPacket sendPacket) {
