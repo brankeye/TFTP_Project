@@ -6,13 +6,18 @@ As noted earlier, the server must be multithreaded. For this iteration, each new
 Also, there must be a nice way to shut down both your server and your client. CRTL-C is NOT a nice way!*/
 public class Server {
 	
+	// can send and receive packets
+	NetworkConnector networkConnector = new NetworkConnector(NetworkConnector.serverPort, true);
+	
+	public Server() {}
+	
 	//sends and receives messages
 	public void sendReceive(){
 		//receive
 		
 		//process
 		
-		byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
+		//byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
 	}
 	
 	public static void main(String[] args) {
