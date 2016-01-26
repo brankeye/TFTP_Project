@@ -12,7 +12,12 @@ As in Iteration 0, your server should create a new client connection thread for 
 You can have additional threads in the client and server, as long as you can justify them.
 */
 public class Server {
-	DatagramSocket receiveSocket = new DatagramSocket();
+	
+	// can send and receive packets (is meant to replace manual sockets!)
+	NetworkConnector networkConnector = new NetworkConnector(NetworkConnector.serverPort, true);
+	
+	public Server() {}
+	
 	//sends and receives messages
 	public void sendReceive(){
 		while(true){
@@ -20,7 +25,7 @@ public class Server {
 		
 			//process
 		
-			byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
+			//byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
 		}
 	}
 	
