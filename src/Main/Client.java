@@ -1,8 +1,10 @@
 package Main;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
+import java.io.UnsupportedEncodingException;
+import java.net.*;
 import General.*;
+import NetworkTypes.Operation;
+import PacketParsers.AckPacketParser;
+import PacketParsers.RequestPacketParser;
 
 public class Client {
 
@@ -26,8 +28,17 @@ public class Client {
 	}
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+		
+//		byte[] data = RequestPacketParser.getByteArray(Operation.RRQ, "filename.txt");
+//		
+//		System.out.println(RequestPacketParser.isValid(data));
+//		System.out.println(RequestPacketParser.getString(data));
+//		System.out.println(RequestPacketParser.getFilename(data));
+//		System.out.println(RequestPacketParser.getTransferMode(data));
+		
+		byte[]data = AckPacketParser.getByteArray(5643);
+		
+		System.out.print(AckPacketParser.getBlockNumber(data));
 	}
 
 }
