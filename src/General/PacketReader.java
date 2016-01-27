@@ -2,6 +2,8 @@ package General;
 
 import java.net.*;
 
+import PacketParsers.*;
+
 public class PacketReader {
 
 	private String name;
@@ -17,21 +19,21 @@ public class PacketReader {
  	    System.out.println("From host: " + receivePacket.getAddress());
  	    System.out.println("Host port: " + receivePacket.getPort());
  	    
- 	    /*
- 	    
- 	    Need to parse the opcode of the packet, then use the respective packet parser
- 	    to print out the String format and the Byte array correctly.
- 	    
- 	    String reqString = getString();
-	    byte reqBytes[]  = getByteArray();
-	    System.out.print("String: '" + reqString + "'\n");
-	    System.out.print("Bytes:  '");
-	    
-	    int i = 0;
-	    while(i < req.getLength()) {
-	    	System.out.print("index " + i + ": " + reqBytes[i++]);
+ 	    // not tested yet
+ 	    byte[] data = receivePacket.getData();
+ 	    String str  = "";
+ 	    switch(PacketParser.getOpcode(data)) {
+ 	    	case RRQ:  str = RequestPacketParser.getString(data); break;
+ 	    	case WRQ:  str = RequestPacketParser.getString(data); break;
+ 	    	case DATA: str = DataPacketParser.getString(data); break;
+ 	    	case ACK:  str = AckPacketParser.getString(data); break;
+ 	    	default:   break;
+ 	    }
+ 	    System.out.print("String: '" + str + "'\n");
+ 	    int i = 0;
+	    while(i < receivePacket.getLength()) {
+	    	System.out.println("Index " + i + ": " + (char)data[i++]);
 	    }
-	    */
  	    
 	    System.out.print("'\n");    
  	    System.out.println("Client: packet received.\n");
@@ -44,9 +46,21 @@ public class PacketReader {
 	    System.out.println("To host: " + sendPacket.getAddress());
 	    System.out.println("Destination host port: " + sendPacket.getPort());
 	    
-	    /*
-	     * Print string and bytes here using packet parsers
-	     */
+	    // not tested yet
+ 	    byte[] data = sendPacket.getData();
+ 	    String str  = "";
+ 	    switch(PacketParser.getOpcode(data)) {
+ 	    	case RRQ:  str = RequestPacketParser.getString(data); break;
+ 	    	case WRQ:  str = RequestPacketParser.getString(data); break;
+ 	    	case DATA: str = DataPacketParser.getString(data); break;
+ 	    	case ACK:  str = AckPacketParser.getString(data); break;
+ 	    	default:   break;
+ 	    }
+ 	    System.out.print("String: '" + str + "'\n");
+ 	    int i = 0;
+	    while(i < sendPacket.getLength()) {
+	    	System.out.println("Index " + i + ": " + (char)data[i++]);
+	    }
 	    
 	    System.out.print("'\n");
 	}

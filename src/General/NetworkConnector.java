@@ -29,6 +29,7 @@ public class NetworkConnector {
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		
 		try {
+			System.out.println("Waiting to receive a packet...");
 			socket.receive(receivePacket);
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely:");

@@ -4,7 +4,7 @@ import NetworkTypes.Operation;
 
 public class AckPacketParser {
 	// returns a string of the byte array
-	public static String getString(byte[] data, int length) {
+	public static String getString(byte[] data) {
 		return new String(data);
 	}
 	
