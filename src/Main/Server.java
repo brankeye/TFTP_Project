@@ -43,17 +43,36 @@ public class Server {
 
 	}
 	
-	private class Splitter implements Runnable{
+	private class Splitter implements Runnable {
 		DatagramPacket datagramPacket;
-		public Splitter(DatagramPacket receivedPacket){
+
+		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket = receivedPacket;
 		}
+
 		@Override
 		public void run() {
+			// this is where the work happens
 			packetReader.readReceivePacket(datagramPacket);
 			byte[] data = datagramPacket.getData();
+			//response for the first request
 			byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
-			
+			networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+
+			//read file or write file 512 bytes at a time
+			/*
+			do {
+				datagramPacket = networkConnector.receive();
+				int blockNumber = datagramPacket.getData()[datagramPacket.getLength() - 1] + 1;
+				
+				//ignore for now, work in progress
+				byte[] response = (data[1] == 1 ? new byte[] { 0, 3, 0, (byte) blockNumber }
+						: new byte[] { 0, 4, 0, (byte) blockNumber });
+						
+				networkConnector.send(new DatagramPacket(response, response.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+			} while (datagramPacket.getLength() == 512);
+			*/
+
 		}
 	}
 }
