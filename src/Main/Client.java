@@ -8,12 +8,14 @@ public class Client {
 
 	// can send and receive packets
 	private NetworkConnector networkConnector;
+	private PacketReader     packetReader;
 	
 	private InetAddress destAddress;
 	private int         destPort;
 	
 	public Client() {
 		networkConnector = new NetworkConnector();
+		packetReader     = new PacketReader("Client");
 		
 		try {
 			destAddress = InetAddress.getByName(Config.ERR_SIM_ADDRESS);

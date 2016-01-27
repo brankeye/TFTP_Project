@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 
 import General.Config;
 import General.NetworkConnector;
+import General.PacketReader;
 
 public class ErrorSimulator {
 
@@ -13,12 +14,15 @@ public class ErrorSimulator {
 	// must receive and send to the Server with the serverConnector
 	NetworkConnector serverConnector;
 	
+	PacketReader     packetReader;
+	
 	private InetAddress serverAddress;
 	private int         serverPort;
 	
 	public ErrorSimulator() {
 		clientConnector     = new NetworkConnector(Config.ERR_SIM_PORT, true);
 		serverConnector     = new NetworkConnector();
+		packetReader        = new PacketReader("ErrorSim");
 		
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);
