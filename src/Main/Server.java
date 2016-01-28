@@ -55,23 +55,42 @@ public class Server {
 			// this is where the work happens
 			packetReader.readReceivePacket(datagramPacket);
 			byte[] data = datagramPacket.getData();
-			//response for the first request
-			byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
-			networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
 
-			//read file or write file 512 bytes at a time
-			/*
+			// response for the first request // for now, the only things we
+			// have to deal with are 1s and 2s
+			byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
+			networkConnector
+					.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+
+			// read file or write file 512 bytes at a time
+
 			do {
 				datagramPacket = networkConnector.receive();
-				int blockNumber = datagramPacket.getData()[datagramPacket.getLength() - 1] + 1;
-				
-				//ignore for now, work in progress
-				byte[] response = (data[1] == 1 ? new byte[] { 0, 3, 0, (byte) blockNumber }
-						: new byte[] { 0, 4, 0, (byte) blockNumber });
-						
-				networkConnector.send(new DatagramPacket(response, response.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+				byte[] clientResponse = datagramPacket.getData();
+				int blockNumber = clientResponse[2] * 10 + clientResponse[3];
+
+				// ignore for now, work in progress
+				if (clientResponse[1] == 3) {
+					System.out.println("Data received");
+					
+					res = new byte[] { 0, 4, (byte) (blockNumber / 10), (byte) (blockNumber % 10) };
+
+					networkConnector.send(
+							new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+				} else { // ignore this too! // for now, only dealing with data and acks
+					System.out.println("Sending data");
+					
+					blockNumber++;
+					byte[] info = new byte[] { 0, 3, (byte) (blockNumber / 10), (byte) (blockNumber % 10) };
+					data = "test".getBytes();
+					res = new byte[data.length+info.length];
+					System.arraycopy(info, 0, res, 0, info.length);
+					System.arraycopy(data, 0, res, 4, data.length);
+
+					networkConnector.send(
+							new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+				}
 			} while (datagramPacket.getLength() == 512);
-			*/
 
 		}
 	}
