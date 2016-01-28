@@ -10,10 +10,6 @@ import General.PacketReader;
 /*
 For this iteration, each newly created client connection thread should terminate after it sends 
 the appropriate acknowledgment to the client that requested the connection.
-
-extend the server program to support steady-state file transfer.
-Add steady-state file transfer capability to the client and server code developed in Iteration 0
-You can have additional threads in the client and server, as long as you can justify them.
 */
 public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
@@ -59,8 +55,17 @@ public class Server {
 			String fileName = new String(Arrays.copyOfRange(data, 2, x + 1));
 
 			// CHECK IF FILE EXISTS! If it does not and it's a read, throw
-			// exception.
-			// If it does not and it's a write, create the file.
+			File f = new File(fileName);
+			if (!f.exists()) {
+				if (data[1] == 2) {
+					try {
+						f.createNewFile();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else
+					throwException();
+			}
 
 			// y will hold the position x stopped at
 			x++;
@@ -84,7 +89,6 @@ public class Server {
 
 			Splitter splitter = new Splitter(networkConnector.receive(), fileName);
 			new Thread(splitter).start();
-			//
 		}
 	}
 
@@ -146,15 +150,26 @@ public class Server {
 
 					blockNumber++;
 					byte[] info = new byte[] { 0, 3, (byte) (blockNumber / 10), (byte) (blockNumber % 10) };
-					data = "test".getBytes();
-					res = new byte[data.length + info.length];
-					System.arraycopy(info, 0, res, 0, info.length);
-					System.arraycopy(data, 0, res, 4, data.length);
 
-					networkConnector.send(
-							new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+					/* send the data in 516 byte chunks. */
+					try {
+						BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
+						data = new byte[512];
+						int n;
+						while ((n = in.read(data)) != -1) {
+							res = new byte[data.length + info.length];
+							System.arraycopy(info, 0, res, 0, info.length);
+							System.arraycopy(data, 0, res, 4, n);
+							networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(),
+									datagramPacket.getPort()));
+						}
+						in.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
 				}
-				//breaks out of the loop
+				// breaks out of the loop
 				if (datagramPacket.getLength() < 516)
 					break;
 			}
