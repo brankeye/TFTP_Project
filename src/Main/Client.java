@@ -47,16 +47,16 @@ public class Client {
 		
 		DatagramPacket packet = null;
 		byte[] rrqBuffer  = RequestPacketParser.getByteArray(Operation.RRQ, filename);
-		int numBytes      = NOT_ZERO;
-		int blockNumber   = 0;
 		boolean done      = false;
 		
 		// send RRQ packet
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
+		packetReader.readSendPacket(packet);
 		
 		// wait for ACK packet and validate
 		packet = networkConnector.receive();
+		packetReader.readReceivePacket(packet);
 		if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
 			return 0;
 		}
@@ -84,17 +84,25 @@ public class Client {
 					done = true;
 				}
 				
-				// wait for ACK packet and validate
+				// wait for DATA packet and validate
 				packet = networkConnector.receive();
+				packetReader.readReceivePacket(packet);
 				if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
-					return 0;
+					done = true;
 				}
-				
+				// TODO - send block ACK
 			} else  {
 				done = true;
 			}	
 		}
-
+		
+		try {
+			outputStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
 		return 0;
 	}
 	
@@ -110,10 +118,14 @@ public class Client {
 		// send WRQ packet
 		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
+		packetReader.readSendPacket(packet);
 				
-		// wait for ACK packet
+		// wait for ACK packet and validate packet
 		packet = networkConnector.receive();
-		// TODO - check contents of ACK packet
+		packetReader.readReceivePacket(packet);
+		if (AckPacketParser.getOpcode(packet.getData()) != Operation.ACK) {
+			return 1;
+		}
 
 		// open local file for reading
 		try {
@@ -137,11 +149,22 @@ public class Client {
 			packet = new DatagramPacket(dataBuffer, dataBuffer.length, destAddress, Config.ERR_SIM_PORT);
 			
 			networkConnector.send(packet);
+			packetReader.readSendPacket(packet);
 			
 			packet = networkConnector.receive();
-			// TODO - validate contents of ACK
+			packetReader.readReceivePacket(packet);
+			if (AckPacketParser.getOpcode(packet.getData()) != Operation.ACK) {
+				return 1;
+			}
 			
 			blockNumber += 1;
+		}
+		
+		try {
+			inputStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
 		}
 		
 		return 0;
@@ -154,17 +177,13 @@ public class Client {
 		String input = "";
 		String filename = "";
 		
-//		byte[] data = RequestPacketParser.getByteArray(Operation.RRQ, "filename.txt");
-//		
-//		System.out.println(RequestPacketParser.isValid(data));
-//		System.out.println(RequestPacketParser.getString(data));
-//		System.out.println(RequestPacketParser.getFilename(data));
-//		System.out.println(RequestPacketParser.getTransferMode(data));
-		
-		//byte[] data = AckPacketParser.getByteArray(5643);
-		
-		//System.out.print(AckPacketParser.getBlockNumber(data));
-		
+		System.out.println(" _____   _____   _____   _____     _     _____ ");
+		System.out.println("|_   _| |  ___| |_   _| |  _  |   / |   |__   /");
+		System.out.println("  | |   | |___    | |   | |_| |  /  |      / / ");
+		System.out.println("  | |   |  ___|   | |   |  ___|   | |     / /  ");
+		System.out.println("  | |   | |       | |   | |      _| |_   / /   ");
+		System.out.println("  |_|   |_|       |_|   |_|     |_____| /_/    ");
+		System.out.println("");
 		
 		// main input loop
 		while (!done) {
