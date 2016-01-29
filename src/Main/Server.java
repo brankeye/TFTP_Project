@@ -30,31 +30,13 @@ public class Server {
 			DatagramPacket datagramPacket = networkConnector.receive();
 			byte[] data = datagramPacket.getData();
 
-			// throws exception if the byte array doesn't start with 0,1 or 0,2
-			if (data[0] != 0 || (data[1] != 1 && data[1] != 2)) {
-				throwException();
-			}
-			// throws exception if the byte array doesn't specify a file name
-			// and mode
-			// filenames occupy from data[2] to the first subsequent 0 found
-			// modes occupy from the first 0 found after index 2, to the next 0
-			// found
-			// x will hold the index of the byte array so I know where I am
+			// gets file name
 			int x = 2;
 			while (data[x] != 0) {
-				// if it reaches the end of the array or finds a value outside
-				// the range 32-127, throw an exception
-				if (x == data.length || (data[x] > 127 && data[x] < 31)) {
-					throwException();
-				}
 				x++;
-			}
-			if (x - 2 < 1) {
-				throwException();
 			}
 			String fileName = new String(Arrays.copyOfRange(data, 2, x + 1));
 
-			// CHECK IF FILE EXISTS! If it does not and it's a read, throw
 			File f = new File(fileName);
 			if (!f.exists()) {
 				if (data[1] == 2) {
@@ -63,29 +45,18 @@ public class Server {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-				} else
-					throwException();
-			}
-
-			// y will hold the position x stopped at
-			x++;
-			int y = x;
-			// while loop to find mode
-			while (data[x] != 0) {
-				// if it reaches the end of the array and it doesn't find a 0
-				if (x == data.length) {
-					throwException();
+				} else {
+					System.out.println("File not found");
+					System.exit(1);
 				}
+			}
+			x++;
+			// gets mode
+			int y = x;
+			while (data[x] != 0) {
 				x++;
 			}
-			// create a string from the subset of byte[] between the two 0s
-			// checks to see if the modes are valid, case insensitively
 			String mode = new String(Arrays.copyOfRange(data, y, x));
-			if (!mode.toLowerCase().equals("netascii") && !mode.toLowerCase().equals("octet")) {
-				throwException();
-			}
-
-			System.out.println("\nServer: Request is valid\n");
 
 			Splitter splitter = new Splitter(networkConnector.receive(), fileName);
 			new Thread(splitter).start();
@@ -109,7 +80,6 @@ public class Server {
 
 		@Override
 		public void run() {
-			// this is where the work happens
 			packetReader.readReceivePacket(datagramPacket);
 			byte[] data = datagramPacket.getData();
 
@@ -119,14 +89,12 @@ public class Server {
 			networkConnector
 					.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
 
-			// read file or write file 512 bytes at a time
-			// do the following while the length of the datagramPacket is 516
+			// read or write file 512 bytes at a time
 			while (true) {
 				datagramPacket = networkConnector.receive();
 				byte[] clientResponse = datagramPacket.getData();
-				int blockNumber = clientResponse[2] * 10 + clientResponse[3];
+				int blockNumber = ((clientResponse[2] << 8) | (clientResponse[3] /* & 0xff */)) % 65535;
 
-				// ignore for now, work in progress
 				if (clientResponse[1] == 3) {
 					System.out.println("Data received");
 					// data to write to file is from index 4 to the end
@@ -142,16 +110,15 @@ public class Server {
 						e.printStackTrace();
 					}
 
-					res = new byte[] { 0, 4, (byte) (blockNumber / 10), (byte) (blockNumber % 10) };
+					res = new byte[] { 0, 4, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
 					networkConnector.send(
 							new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
-				} else {// for now, only dealing with data and acks
+				} else {
 					System.out.println("Sending data");
-
 					blockNumber++;
-					byte[] info = new byte[] { 0, 3, (byte) (blockNumber / 10), (byte) (blockNumber % 10) };
+					byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff)};
 
-					/* send the data in 516 byte chunks. */
+					// send the data in 516 byte chunks
 					try {
 						BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
 						data = new byte[512];
@@ -167,21 +134,10 @@ public class Server {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-
 				}
-				// breaks out of the loop
 				if (datagramPacket.getLength() < 516)
 					break;
 			}
-		}
-	}
-
-	public void throwException() {
-		try {
-			throw new Exception();
-		} catch (Exception e) {
-			System.out.println("\nREQUEST IS INVALID");
-			System.exit(1);
 		}
 	}
 }
