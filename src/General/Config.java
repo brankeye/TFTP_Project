@@ -8,5 +8,5 @@ public class Config {
 	public static String       ERR_SIM_ADDRESS   = "127.0.0.1";
 	public static int          SERVER_PORT       = 69;
 	public static String       SERVER_ADDRESS    = "127.0.0.1";
-	public static int          MAX_BYTE_ARR_SIZE = 250;
+	public static int          MAX_BYTE_ARR_SIZE = 516;
 }

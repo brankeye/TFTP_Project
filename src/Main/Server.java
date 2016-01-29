@@ -34,7 +34,7 @@ public class Server {
 			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
 
-			File f = new File(RequestPacketParser.getFilename(data));
+			File f = new File(RELPATH + RequestPacketParser.getFilename(data));
 			System.out.println("File name: " + f);
 			if (!f.exists()) {
 				if (data[1] == 2) {
