@@ -16,6 +16,8 @@ public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
 	NetworkConnector networkConnector;
 	PacketReader packetReader;
+	
+	final static String RELPATH = "src/Main/ServerStorage/";
 
 	// may or may not need this, will look further into this
 	public Server() {
@@ -93,7 +95,7 @@ public class Server {
 					// will move to somewhere else later
 					BufferedOutputStream out;
 					try {
-						out = new BufferedOutputStream(new FileOutputStream(fileName));
+						out = new BufferedOutputStream(new FileOutputStream(RELPATH + fileName));
 						out.write(data, 0, data.length);
 						out.close();
 					} catch (IOException e) {
@@ -112,7 +114,7 @@ public class Server {
 
 					// send the data in 516 byte chunks
 					try {
-						BufferedInputStream in = new BufferedInputStream(new FileInputStream(fileName));
+						BufferedInputStream in = new BufferedInputStream(new FileInputStream(RELPATH + fileName));
 						data = new byte[512];
 						int n;
 						while ((n = in.read(data)) != -1) {
