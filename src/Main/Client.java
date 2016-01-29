@@ -7,6 +7,7 @@ import NetworkTypes.Operation;
 import PacketParsers.AckPacketParser;
 import PacketParsers.DataPacketParser;
 import PacketParsers.RequestPacketParser;
+//import Main.*;
 
 public class Client {
 
@@ -25,6 +26,7 @@ public class Client {
 	final static int SERVER_PORT = 69;
 	
 	final static String PROMPT = "TFTP> ";
+	final static String RELPATH = "src/Main/ClientStorage/";
 	
 	public Client() {
 		scanner          = new Scanner(System.in);
@@ -66,9 +68,9 @@ public class Client {
 		
 		// open local file for writing
 		try {
-			outputStream = new FileOutputStream(new File(filename));
+			outputStream = new FileOutputStream(new File(RELPATH + filename));
 		} catch (FileNotFoundException e) {
-			System.out.println("File not found: " + filename);
+			System.out.println("File not found: " + RELPATH + filename);
 			return 1;
 		}
 		
@@ -124,7 +126,15 @@ public class Client {
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
 		int numBytes      = NOT_ZERO;
 		int blockNumber   = 0;
-		
+
+		// open local file for reading
+		try {
+			inputStream = new FileInputStream(new File(RELPATH + filename));
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + RELPATH + filename);
+			return 1;
+		}
+
 		// send WRQ packet
 		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
@@ -137,14 +147,6 @@ public class Client {
 			return 1;
 		}
 
-		// open local file for reading
-		try {
-			inputStream = new FileInputStream(new File(filename));
-		} catch (FileNotFoundException e) {
-			System.out.println("File not found: " + filename);
-			return 1;
-		}
-		
 		// read local file in blocks of 512 bytes, send DATA packet
 		while (numBytes > 0) {
 			try {
@@ -185,6 +187,7 @@ public class Client {
 		boolean done = false;
 		Client client = new Client();
 		String input = "";
+		String normalizedInput = "";
 		String filename = "";
 		
 		System.out.println(" _____   _____   _____   _____     _     _____ ");
@@ -200,10 +203,10 @@ public class Client {
 			System.out.print(PROMPT);
 			
 			// read and normalize input
-			input = scanner.nextLine().toLowerCase().trim(); 
-			
+			input = scanner.nextLine().trim(); 
+			normalizedInput = input.toLowerCase();
 			// take action based on input
-			if (input.startsWith("read")) {
+			if (normalizedInput.startsWith("read")) {
 				filename = input.substring(4, input.length()).trim(); 
 				if (filename.length() > 0) {
 					//System.out.println("ReadRequest: \"" + filename + "\"");
@@ -211,7 +214,7 @@ public class Client {
 				} else {
 					System.out.println("Error - filename not supplied");
 				}
-			} else if (input.startsWith("write")) {
+			} else if (normalizedInput.startsWith("write")) {
 				filename = input.substring(5, input.length()).trim();
 				if (filename.length() > 0) {
 					//System.out.println("WriteRequest: " + filename);
@@ -219,10 +222,10 @@ public class Client {
 				} else {
 					System.out.println("Error - filename not supplied");
 				}
-			} else if (input.startsWith("quit")) {
+			} else if (normalizedInput.startsWith("quit")) {
 				System.out.println("Quitting");
 				done = true;
-			} else if (input.length() > 0) {
+			} else if (normalizedInput.length() > 0) {
 				System.out.println("Command not recognized: " + input);
 			}
 		}
