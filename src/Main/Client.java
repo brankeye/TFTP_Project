@@ -123,6 +123,7 @@ public class Client {
 		
 		DatagramPacket packet = null;
 		byte[] dataBuffer = new byte[512];
+		byte[] trimmedData;
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
 		int numBytes      = NOT_ZERO;
 		int blockNumber   = 0;
@@ -155,10 +156,23 @@ public class Client {
 				e.printStackTrace();
 				System.exit(1);
 			}
+
+			System.out.println("numBytes = " + numBytes);
+			
+			if (numBytes < 0) {
+				numBytes = 0;
+			}
+			// Trim the buffer in case amount of data read was < 512 bytes
+			if (numBytes < 512) {
+				trimmedData = new byte[numBytes];
+				System.arraycopy(dataBuffer, 0, trimmedData, 0, numBytes);
+			} else {
+				trimmedData = dataBuffer;
+			}
 			
 			// send packet
-			dataBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
-			packet = new DatagramPacket(dataBuffer, dataBuffer.length, destAddress, Config.ERR_SIM_PORT);
+			trimmedData = DataPacketParser.getByteArray(blockNumber, trimmedData);
+			packet = new DatagramPacket(trimmedData, trimmedData.length, destAddress, Config.ERR_SIM_PORT);
 			
 			networkConnector.send(packet);
 			packetReader.readSendPacket(packet);
