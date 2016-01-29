@@ -46,12 +46,12 @@ public class ErrorSimulator {
 		//TODO: Could split try-catch blocks to multiple ones
 		try{
 			//Create packet of max filled packet
-			byte dataClient[] = new byte[516];
-			DatagramPacket dpClient = new DatagramPacket(dataClient, dataClient.length);
+			//byte dataClient[] = new byte[516];
+			//DatagramPacket dpClient = new DatagramPacket(dataClient, dataClient.length);
 			
 			//Receive packet from client
 			//TODO: Add functionality for multiple clients 
-			dpClient = clientConnector.receive();
+			DatagramPacket dpClient = clientConnector.receive();
 			InetAddress clientAddress = dpClient.getAddress();
 			int         clientPort	  = dpClient.getPort();		//used to send back to client
 			System.out.println("Client requesting from: " + dpClient.getAddress() + ":" + dpClient.getPort());
@@ -71,9 +71,9 @@ public class ErrorSimulator {
 			serverConnector.send(sendServerPacket);
 			
 			//Receive the response from server
-			byte dataServer[] = new byte[516];
-			DatagramPacket dpServer = new DatagramPacket(dataServer, dataServer.length);
-			dpServer = serverConnector.receive();
+			//byte dataServer[] = new byte[516];
+			//DatagramPacket dpServer = new DatagramPacket(dataServer, dataServer.length);
+			DatagramPacket dpServer = serverConnector.receive();
 			
 			System.out.println("Server responded with:");
 			System.out.println("Response bytes: " + dpServer.getData());
