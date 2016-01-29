@@ -1,5 +1,4 @@
 package Main;
-import java.io.UnsupportedEncodingException;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -20,9 +19,12 @@ public class Client {
 	
 	private static Scanner scanner;
 	InputStream inputStream;
+	OutputStream outputStream;
 	
 	final static int NOT_ZERO = 1;
 	final static int SERVER_PORT = 69;
+	
+	final static String PROMPT = "TFTP> ";
 	
 	public Client() {
 		scanner          = new Scanner(System.in);
@@ -40,9 +42,59 @@ public class Client {
 		
 	}
 	
+	// reads a server-hosted file and writes it locally
 	private int read(String filename) {
 		
+		DatagramPacket packet = null;
+		byte[] rrqBuffer  = RequestPacketParser.getByteArray(Operation.RRQ, filename);
+		int numBytes      = NOT_ZERO;
+		int blockNumber   = 0;
+		boolean done      = false;
 		
+		// send RRQ packet
+		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
+		networkConnector.send(packet);
+		
+		// wait for ACK packet and validate
+		packet = networkConnector.receive();
+		if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
+			return 0;
+		}
+		
+		// open local file for writing
+		try {
+			outputStream = new FileOutputStream(new File(filename));
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found: " + filename);
+			return 1;
+		}
+		
+		// loop while receiving data packets
+		while (! done) {
+			
+			if (packet.getLength() > 4) {
+				try {
+					outputStream.write(DataPacketParser.getData(packet.getData()));
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
+				if (packet.getLength() < 516) {
+					done = true;
+				}
+				
+				// wait for ACK packet and validate
+				packet = networkConnector.receive();
+				if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
+					return 0;
+				}
+				
+			} else  {
+				done = true;
+			}	
+		}
+
 		return 0;
 	}
 	
@@ -55,6 +107,14 @@ public class Client {
 		int numBytes      = NOT_ZERO;
 		int blockNumber   = 0;
 		
+		// send WRQ packet
+		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
+		networkConnector.send(packet);
+				
+		// wait for ACK packet
+		packet = networkConnector.receive();
+		// TODO - check contents of ACK packet
+
 		// open local file for reading
 		try {
 			inputStream = new FileInputStream(new File(filename));
@@ -62,15 +122,6 @@ public class Client {
 			System.out.println("File not found: " + filename);
 			return 1;
 		}
-		
-		// send WRQ packet
-		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, Config.ERR_SIM_PORT);
-		networkConnector.send(packet);
-				
-		// wait for ACK packet
-		packet = networkConnector.receive();
-		// TODO - check contents of ACK packet are 0400
-		
 		
 		// read local file in blocks of 512 bytes, send DATA packet
 		while (numBytes > 0) {
@@ -81,7 +132,7 @@ public class Client {
 				System.exit(1);
 			}
 			
-			// TODO - send packet
+			// send packet
 			dataBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
 			packet = new DatagramPacket(dataBuffer, dataBuffer.length, destAddress, Config.ERR_SIM_PORT);
 			
@@ -110,26 +161,40 @@ public class Client {
 //		System.out.println(RequestPacketParser.getFilename(data));
 //		System.out.println(RequestPacketParser.getTransferMode(data));
 		
-		byte[] data = AckPacketParser.getByteArray(5643);
+		//byte[] data = AckPacketParser.getByteArray(5643);
 		
-		System.out.print(AckPacketParser.getBlockNumber(data));
+		//System.out.print(AckPacketParser.getBlockNumber(data));
+		
 		
 		// main input loop
 		while (!done) {
-			input = scanner.nextLine().toLowerCase().trim();
-			//System.out.println(input);
-			//System.out.println(input.length());
+			System.out.print(PROMPT);
 			
-			if (input.startsWith("read ")) {
-				filename = input.substring(4, input.length()).trim();
-				System.out.println("ReadRequest: " + filename);
-			} else if (input.startsWith("write ")) {
+			// read and normalize input
+			input = scanner.nextLine().toLowerCase().trim(); 
+			
+			// take action based on input
+			if (input.startsWith("read")) {
+				filename = input.substring(4, input.length()).trim(); 
+				if (filename.length() > 0) {
+					//System.out.println("ReadRequest: \"" + filename + "\"");
+					client.read(filename);
+				} else {
+					System.out.println("Error - filename not supplied");
+				}
+			} else if (input.startsWith("write")) {
 				filename = input.substring(5, input.length()).trim();
-				System.out.println("WriteRequest: " + filename);
-				client.write(filename);
+				if (filename.length() > 0) {
+					//System.out.println("WriteRequest: " + filename);
+					client.write(filename);
+				} else {
+					System.out.println("Error - filename not supplied");
+				}
 			} else if (input.startsWith("quit")) {
 				System.out.println("Quitting");
 				done = true;
+			} else if (input.length() > 0) {
+				System.out.println("Command not recognized: " + input);
 			}
 		}
 		
