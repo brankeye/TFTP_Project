@@ -30,10 +30,12 @@ public class PacketReader {
  	    	default:   break;
  	    }
  	    System.out.print("String: '" + str + "'\n");
+ 	    /*
  	    int i = 0;
 	    while(i < receivePacket.getLength()) {
 	    	System.out.println("Index " + i + ": " + (char)data[i++]);
 	    }
+	    */
  	    
 	    System.out.print("'\n");    
  	    System.out.println(name + ": packet received.\n");
@@ -57,10 +59,12 @@ public class PacketReader {
  	    	default:   break;
  	    }
  	    System.out.print("String: '" + str + "'\n");
+ 	    /*
  	    int i = 0;
 	    while(i < sendPacket.getLength()) {
 	    	System.out.println("Index " + i + ": " + (char)data[i++]);
 	    }
+	    */
 	    
 	    System.out.print("'\n");
 	}
