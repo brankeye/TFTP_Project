@@ -80,14 +80,15 @@ public class RequestPacketParser extends PacketParser {
 	public static String getFilename(byte[] data) {
 
 		for (int i = 2; i < data.length; i++) {
-			if (data[i] == 0) {
-				if (i != 2) {
+			if (data[i] == 0) {	// If a 0 byte is encountered, stop.
+				if (i != 2) {	// Check for 0 length filenames.
 					return new String(data, 2, i - 2);
 				}
 				break;
 			}
 		}
-		return "Invalid Filename";
+		
+		return "Invalid Filename"; // Returns if a 0 byte is never found
 	}
 
 	/**
@@ -100,10 +101,16 @@ public class RequestPacketParser extends PacketParser {
 	 * @see TransferMode
 	 */
 	public static TransferMode getTransferMode(byte[] data) {
-		for (int i = getFilename(data).getBytes().length + 3; i < data.length; i++) {
-			if (data[i] == 0) {
-				return TransferMode.valueOf(new String(data, getFilename(data).getBytes().length + 3,
+		
+		int seperator = getFilename(data).getBytes().length + 3; //The location of the 0 separating the filename and mode
+		
+		for (int i = seperator; i < data.length; i++) {
+			if (data[i] == 0) { // stop once encountering a 0 byte
+				if(i != seperator){ // if the iterator didn't progress return invalid (ie. zero length mode)
+					return TransferMode.valueOf(new String(data, seperator, 
 						i - getFilename(data).getBytes().length - 3));
+				}
+				break;
 			}
 		}
 		return TransferMode.INVALID;
