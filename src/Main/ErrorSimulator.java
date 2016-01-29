@@ -20,6 +20,7 @@ public class ErrorSimulator {
 	
 	private InetAddress serverAddress;
 	private int         serverPort;
+
 	
 	public ErrorSimulator() {
 		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, true);
@@ -52,10 +53,13 @@ public class ErrorSimulator {
 			//Receive packet from client
 			//TODO: Add functionality for multiple clients 
 			dpClient = clientConnector.receive();
+			InetAddress clientAddress = dpClient.getAddress();
+			int         clientPort	  = dpClient.getPort();		//used to send back to client
 			System.out.println("Client requesting from: " + dpClient.getAddress() + ":" + dpClient.getPort());
 			System.out.println("Client sent:" + dpClient.getData());
-			System.out.println("Client String:" +  byteToString(dpClient.getData(), dpClient.getLength()));
-		
+			System.out.println("Client sent String:" +  byteToString(dpClient.getData(), dpClient.getLength()));
+		    
+			
 	
 			//-- ADD CALLS TO ERROR FUNCTION ON PACKETS HERE -- 
 			
@@ -63,8 +67,9 @@ public class ErrorSimulator {
 			//--
 			
 			//Send packet to server
-			System.out.println("Sending to Server");
-			serverConnector.send(dpClient);
+			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getData().length, serverAddress, serverPort);
+			System.out.println("Sending to Server at" + serverAddress + ":" + serverPort);
+			serverConnector.send(sendServerPacket);
 			
 			//Receive the response from server
 			byte dataServer[] = new byte[516];
@@ -75,7 +80,8 @@ public class ErrorSimulator {
 			System.out.println("Response bytes: " + dpServer.getData());
 				
 			//Send server's response to client
-			clientConnector.send(dpServer);
+			DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getData().length, clientAddress, clientPort);
+			clientConnector.send(responsePacket);
 		}
 	
 		catch (Exception e){
@@ -101,5 +107,3 @@ public class ErrorSimulator {
 
 	
 	
-
-
