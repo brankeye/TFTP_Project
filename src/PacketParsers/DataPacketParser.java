@@ -34,10 +34,12 @@ public class DataPacketParser extends PacketParser {
 
 		stream.write(0); // Initial 0 byte.
 		stream.write(Operation.DATA.ordinal());
+		stream.write((blockNumber & 0x0000ff00) >> 8);
+		stream.write((blockNumber & 0x000000ff));
 		for (byte b : data) {
 			stream.write(b);
 		}
-		stream.write(0); // Ending 0
+		//stream.write(0); // Ending 0
 
 		return stream.toByteArray();
 	}
