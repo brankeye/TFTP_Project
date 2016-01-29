@@ -66,7 +66,7 @@ public class ErrorSimulator {
 			//--
 			
 			//Send packet to server
-			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getData().length, serverAddress, serverPort);
+			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), serverAddress, serverPort);
 			System.out.println("Sending to Server at" + serverAddress + ":" + serverPort);
 			serverConnector.send(sendServerPacket);
 			
@@ -79,7 +79,7 @@ public class ErrorSimulator {
 			System.out.println("Response bytes: " + dpServer.getData());
 				
 			//Send server's response to client
-			DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getData().length, clientAddress, clientPort);
+			DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
 			clientConnector.send(responsePacket);
 		}
 	
