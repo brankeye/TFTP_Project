@@ -57,7 +57,7 @@ public class ErrorSimulator {
 			int         clientPort	  = dpClient.getPort();		//used to send back to client
 			System.out.println("Client requesting from: " + dpClient.getAddress() + ":" + dpClient.getPort());
 			System.out.println("Client sent:" + dpClient.getData());
-			System.out.println("Client String:" +  byteToString(dpClient.getData(), dpClient.getLength()));
+			System.out.println("Client sent String:" +  byteToString(dpClient.getData(), dpClient.getLength()));
 		    
 			
 	
@@ -68,7 +68,7 @@ public class ErrorSimulator {
 			
 			//Send packet to server
 			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getData().length, serverAddress, serverPort);
-			System.out.println("Sending to Server");
+			System.out.println("Sending to Server at" + serverAddress + ":" + serverPort);
 			serverConnector.send(sendServerPacket);
 			
 			//Receive the response from server
