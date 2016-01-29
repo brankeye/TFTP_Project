@@ -6,6 +6,7 @@ import java.util.Arrays;
 import General.Config;
 import General.NetworkConnector;
 import General.PacketReader;
+import PacketParsers.RequestPacketParser;
 
 /*
 For this iteration, each newly created client connection thread should terminate after it sends 
@@ -28,16 +29,11 @@ public class Server {
 			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
 			DatagramPacket datagramPacket = networkConnector.receive();
+			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
 
-			// gets file name
-			int x = 2;
-			while (data[x] != 0) {
-				x++;
-			}
-			String fileName = new String(Arrays.copyOfRange(data, 2, x + 1));
-
-			File f = new File(fileName);
+			File f = new File(RequestPacketParser.getFilename(data));
+			System.out.println("File name: " + f);
 			if (!f.exists()) {
 				if (data[1] == 2) {
 					try {
@@ -50,16 +46,10 @@ public class Server {
 					System.exit(1);
 				}
 			}
-			x++;
-			// gets mode
-			int y = x;
-			while (data[x] != 0) {
-				x++;
-			}
-			String mode = new String(Arrays.copyOfRange(data, y, x));
-
-			Splitter splitter = new Splitter(networkConnector.receive(), fileName);
-			new Thread(splitter).start();
+			System.out.println("Starting new thread");
+			Splitter splitter = new Splitter(datagramPacket, f);
+			Thread t = new Thread(splitter);
+			t.start();
 		}
 	}
 
@@ -71,9 +61,9 @@ public class Server {
 
 	private class Splitter implements Runnable {
 		DatagramPacket datagramPacket;
-		String fileName;
+		File fileName;
 
-		public Splitter(DatagramPacket receivedPacket, String file) {
+		public Splitter(DatagramPacket receivedPacket, File file) {
 			datagramPacket = receivedPacket;
 			fileName = file;
 		}
@@ -94,7 +84,7 @@ public class Server {
 				datagramPacket = networkConnector.receive();
 				byte[] clientResponse = datagramPacket.getData();
 				int blockNumber = ((clientResponse[2] << 8) | (clientResponse[3] /* & 0xff */)) % 65535;
-
+				System.out.println("Block Number: "+blockNumber);
 				if (clientResponse[1] == 3) {
 					System.out.println("Data received");
 					// data to write to file is from index 4 to the end
@@ -111,12 +101,14 @@ public class Server {
 					}
 
 					res = new byte[] { 0, 4, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
-					networkConnector.send(
-							new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+					DatagramPacket packetToSend = new DatagramPacket(res, res.length, datagramPacket.getAddress(),
+							datagramPacket.getPort());
+					packetReader.readSendPacket(packetToSend);
+					networkConnector.send(packetToSend);
 				} else {
 					System.out.println("Sending data");
 					blockNumber++;
-					byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff)};
+					byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
 
 					// send the data in 516 byte chunks
 					try {
