@@ -6,6 +6,10 @@ import java.util.Arrays;
 import General.Config;
 import General.NetworkConnector;
 import General.PacketReader;
+import NetworkTypes.Operation;
+import PacketParsers.AckPacketParser;
+import PacketParsers.DataPacketParser;
+import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
 /*
@@ -33,7 +37,18 @@ public class Server {
 			DatagramPacket datagramPacket = networkConnector.receive();
 			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
+			
+			Operation opcode = PacketParser.getOpcode(data);
+			if(RequestPacketParser.isValid(data)) {
+				System.out.println("Starting new thread");
+				Splitter splitter = new Splitter(datagramPacket);
+				Thread t = new Thread(splitter);
+				t.start();
+			} else {
+				// invalid?
+			}
 
+			/*
 			File f = new File(RELPATH + RequestPacketParser.getFilename(data));
 			System.out.println("File name: " + f);
 			if (!f.exists()) {
@@ -48,10 +63,7 @@ public class Server {
 					System.exit(1);
 				}
 			}
-			System.out.println("Starting new thread");
-			Splitter splitter = new Splitter(datagramPacket, f);
-			Thread t = new Thread(splitter);
-			t.start();
+			*/
 		}
 	}
 
@@ -63,58 +75,86 @@ public class Server {
 
 	private class Splitter implements Runnable {
 		DatagramPacket datagramPacket;
-		File fileName;
 
-		public Splitter(DatagramPacket receivedPacket, File file) {
+		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket = receivedPacket;
-			fileName = file;
 		}
 
 		@Override
 		public void run() {
+			// read the packet
 			packetReader.readReceivePacket(datagramPacket);
 			byte[] data = datagramPacket.getData();
+			
+			// verify the filename is good
+			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
+			System.out.println("File name: " + file);
+			Operation requestOpcode = PacketParser.getOpcode(data);
+			if (!file.exists()) {
+				if (requestOpcode == Operation.WRQ) {
+					try {
+						file.createNewFile();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("File not found");
+					System.exit(1);
+				}
+			}
 
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
-			byte[] res = (data[1] == 1 ? new byte[] { 0, 3, 0, 1 } : new byte[] { 0, 4, 0, 0 });
-			networkConnector
-					.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+			byte[] res;
+			Operation opcode = PacketParser.getOpcode(data);
+			if(opcode == Operation.RRQ) {
+				res = DataPacketParser.getByteArray(0, new byte[] {0, 1});
+			} else { // Operation.WRQ
+				res = AckPacketParser.getByteArray(0);
+			}
+			networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
 
 			// read or write file 512 bytes at a time
 			while (true) {
 				datagramPacket = networkConnector.receive();
 				byte[] clientResponse = datagramPacket.getData();
-				int blockNumber = ((clientResponse[2] << 8) | (clientResponse[3] /* & 0xff */)) % 65535;
-				System.out.println("Block Number: "+blockNumber);
-				if (clientResponse[1] == 3) {
+				
+				Operation clientOpcode = PacketParser.getOpcode(clientResponse);
+				if(clientOpcode == Operation.DATA) {
+					int blockNumber = DataPacketParser.getBlockNumber(clientResponse);
+					System.out.println("Block Number: " + blockNumber);
+					
 					System.out.println("Data received");
-					// data to write to file is from index 4 to the end
-					data = Arrays.copyOfRange(clientResponse, 4, clientResponse.length - 1);
+					// data to write to file
+					byte[] fileData = DataPacketParser.getData(clientResponse);
 
 					// will move to somewhere else later
 					BufferedOutputStream out;
 					try {
-						out = new BufferedOutputStream(new FileOutputStream(RELPATH + fileName));
-						out.write(data, 0, data.length);
+						out = new BufferedOutputStream(new FileOutputStream(RELPATH + file));
+						out.write(fileData, 0, fileData.length);
 						out.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 
-					res = new byte[] { 0, 4, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
-					DatagramPacket packetToSend = new DatagramPacket(res, res.length, datagramPacket.getAddress(),
-							datagramPacket.getPort());
-					packetReader.readSendPacket(packetToSend);
-					networkConnector.send(packetToSend);
-				} else {
+					byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
+					DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
+							                                         datagramPacket.getAddress(), datagramPacket.getPort());
+					packetReader.readSendPacket(sendPacket);
+					networkConnector.send(sendPacket);
+					
+				} else if(clientOpcode == Operation.ACK) {
+					int blockNumber = AckPacketParser.getBlockNumber(clientResponse);
+					System.out.println("Block Number: " + blockNumber);
+					
 					System.out.println("Sending data");
 					blockNumber++;
 					byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
 
 					// send the data in 516 byte chunks
 					try {
-						BufferedInputStream in = new BufferedInputStream(new FileInputStream(RELPATH + fileName));
+						BufferedInputStream in = new BufferedInputStream(new FileInputStream(RELPATH + file));
 						data = new byte[512];
 						int n;
 						while ((n = in.read(data)) != -1) {
@@ -128,8 +168,9 @@ public class Server {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-				}
-				if (datagramPacket.getLength() < 516)
+				} else {} // error?
+				
+				if (datagramPacket.getLength() < 516) 
 					break;
 			}
 		}
