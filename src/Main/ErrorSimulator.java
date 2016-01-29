@@ -101,9 +101,5 @@ public class ErrorSimulator {
 		}
 		//Error creation  --- for future use
 	public void createError(int level){
-		}
-		}
-	
-
-	
-	
+	}
+}
