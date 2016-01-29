@@ -38,32 +38,12 @@ public class Server {
 			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
 			
-			Operation opcode = PacketParser.getOpcode(data);
 			if(RequestPacketParser.isValid(data)) {
 				System.out.println("Starting new thread");
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
-			} else {
-				// invalid?
-			}
-
-			/*
-			File f = new File(RELPATH + RequestPacketParser.getFilename(data));
-			System.out.println("File name: " + f);
-			if (!f.exists()) {
-				if (data[1] == 2) {
-					try {
-						f.createNewFile();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				} else {
-					System.out.println("File not found");
-					System.exit(1);
-				}
-			}
-			*/
+			} else {} // error?
 		}
 	}
 
@@ -150,7 +130,8 @@ public class Server {
 					
 					System.out.println("Sending data");
 					blockNumber++;
-					byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
+					//byte[] info = new byte[] { 0, 3, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
+					
 
 					// send the data in 516 byte chunks
 					try {
@@ -158,10 +139,8 @@ public class Server {
 						data = new byte[512];
 						int n;
 						while ((n = in.read(data)) != -1) {
-							res = new byte[data.length + info.length];
-							System.arraycopy(info, 0, res, 0, info.length);
-							System.arraycopy(data, 0, res, 4, n);
-							networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(),
+							byte[] serverRes = DataPacketParser.getByteArray(blockNumber, data);
+							networkConnector.send(new DatagramPacket(serverRes, serverRes.length, datagramPacket.getAddress(),
 									datagramPacket.getPort()));
 						}
 						in.close();
