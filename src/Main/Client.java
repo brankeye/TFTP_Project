@@ -46,8 +46,11 @@ public class Client {
 	private int read(String filename) {
 		
 		DatagramPacket packet = null;
+		int blockNumber   = 0;
 		byte[] rrqBuffer  = RequestPacketParser.getByteArray(Operation.RRQ, filename);
+		byte[] ackBuffer  = AckPacketParser.getByteArray(blockNumber);
 		boolean done      = false;
+		
 		
 		// send RRQ packet
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
@@ -84,16 +87,23 @@ public class Client {
 					done = true;
 				}
 				
+				// send ACK packet
+				AckPacketParser.getByteArray(blockNumber);
+				packet = new DatagramPacket(ackBuffer, blockNumber, destAddress, destPort);
+				networkConnector.send(packet);
+				
 				// wait for DATA packet and validate
 				packet = networkConnector.receive();
 				packetReader.readReceivePacket(packet);
 				if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
 					done = true;
 				}
-				// TODO - send block ACK
+
 			} else  {
 				done = true;
 			}	
+			
+			blockNumber += 1;
 		}
 		
 		try {
