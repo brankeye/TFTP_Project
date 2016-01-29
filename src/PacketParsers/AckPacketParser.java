@@ -20,7 +20,7 @@ public class AckPacketParser extends PacketParser {
 	 */
 	public static byte[] getByteArray(int blockNumber) {
 		// opcode is 04, but maybe should parse for it to check
-		byte[] data = { 0, 4, (byte) ((blockNumber >>> 8) & 0xff), (byte) (blockNumber & 0xff) };
+		byte[] data = { 0, 4, (byte) ((blockNumber >>> 8)), (byte) (blockNumber) };
 		return data;
 	}
 
@@ -37,6 +37,6 @@ public class AckPacketParser extends PacketParser {
 	 * @return the number of the block of data
 	 */
 	public static int getBlockNumber(byte[] data) {
-		return ((data[2] << 8) | ((data[3] & 0xFF)));
+		return ((data[2] << 8) & 0xFF00) | (data[3] & 0xFF);
 	}
 }
