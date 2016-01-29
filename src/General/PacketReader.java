@@ -36,7 +36,7 @@ public class PacketReader {
 	    }
  	    
 	    System.out.print("'\n");    
- 	    System.out.println("Client: packet received.\n");
+ 	    System.out.println(name + ": packet received.\n");
 	}
 	
 	// reads the contents of a send packet
