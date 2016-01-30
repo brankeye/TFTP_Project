@@ -76,7 +76,6 @@ public class NetworkConnector {
 	private void initializeSocket(int receivingPort) {
 		try {
 	       socket = new DatagramSocket(receivingPort);
-	       //socket.setSoTimeout(15000);
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
