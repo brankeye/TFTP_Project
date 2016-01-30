@@ -37,11 +37,11 @@ PacketReader.java - class to print packet information
 
 
 Divided Work:
-Brandon: NetworkConnector, Use Case Map, README
+Brandon: NetworkConnector, PacketReader, Use Case Maps, minor stuff in Server/ErrorSim
 Jason:   Server, README
 Aaron:   Client, README
 Mazhar:  ErrorSim, UML Class Diagram
-Remy:    All PacketParsers
+Remy:    All PacketParsers, minor stuff in Server/Client
 
 // There's a bunch of stuff we're missing here though
 
