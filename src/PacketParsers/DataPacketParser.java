@@ -73,6 +73,6 @@ public class DataPacketParser extends PacketParser {
 		if (data.length < 4) {
 			return new byte[] { -1 };
 		}
-		return Arrays.copyOfRange(data, 3, data.length - 1);
+		return Arrays.copyOfRange(data, 4, data.length);
 	}
 }

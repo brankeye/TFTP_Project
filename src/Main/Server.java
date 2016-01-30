@@ -114,7 +114,7 @@ public class Server {
 					
 					datagramPacket = threadedNetworkConnector.receive();
 					packetReader.readReceivePacket(datagramPacket);
-			}
+				}
 			} else { // Operation.WRQ
 				boolean done = false;
 				int blockNumber = 0;
@@ -127,6 +127,7 @@ public class Server {
 					datagramPacket = threadedNetworkConnector.receive();
 					
 					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { done = true; }
+					
 					byte[] clientResponse = datagramPacket.getData();
 					blockNumber = DataPacketParser.getBlockNumber(clientResponse);
 					System.out.println("Block Number: " + blockNumber++);
@@ -137,9 +138,9 @@ public class Server {
 					byte[] fileData = DataPacketParser.getData(clientResponse);
 	
 					// will move to somewhere else later
-					BufferedOutputStream out;
+					FileOutputStream out;
 					try {
-						out = new BufferedOutputStream(new FileOutputStream(file));
+						out = new FileOutputStream(file,true);
 						out.write(fileData, 0, fileData.length);
 						out.close();
 					} catch (IOException e) {
