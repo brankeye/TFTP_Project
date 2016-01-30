@@ -9,7 +9,7 @@ To use, type in the type of action (ie. read or write) and the file name, separa
 Files
 Client.java - the client that sends read/write requests
 
-ErrorSimulator.java - error simulator
+ErrorSimulator.java - error simulator - only acts as intermediate host between server-client for iteration 1
 
 Server.java - the server that responds to read/write requests
 
