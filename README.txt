@@ -23,11 +23,11 @@ RequestPacketParser.java - parser for request packets
 
 PacketParser.java - 
 
-Operation.java - 
+Operation.java - Enum for the different TFTP Opcodes
 
-TransferMode.java - 
+TransferMode.java - Enum for the different transfer modes (netascii/octet)
 
-Config.java -
+Config.java - Some configuration parameters
 
 NetworkConnector.java - class to help send/receive packets
 
