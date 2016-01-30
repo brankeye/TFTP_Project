@@ -1,10 +1,9 @@
 SYSC3303 Project - Team 17
-file explaining the names of your files, set up instructions, etc.
 
 To set up, import the project folder into Eclipse,
 start the Server, then the ErrorSimulator, and finally the Client
 
-To use, type in the type of action (ie. read or write) and the file name, separated by a space, and press Enter
+To use, in the Client's prompt type in the type of action (ie. read or write) and the file name, separated by a space, and press Enter
 
 Files
 Client.java - the client that sends read/write requests
@@ -20,8 +19,6 @@ DataPacketParser.java - parser for DATA packets
 ErrorPacketParser.java - parser for Error packets
 
 RequestPacketParser.java - parser for request packets
-
-PacketParser.java - 
 
 Operation.java - Enum for the different TFTP Opcodes
 
