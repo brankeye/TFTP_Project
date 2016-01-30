@@ -27,14 +27,13 @@ public class NetworkConnector {
 	public DatagramPacket receive() {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
-		
 		try {
 			System.out.println("Waiting to receive a packet...");
 			socket.receive(receivePacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
+			System.out.print("IO Exception: likely ");
 			System.out.println("Receive Socket Timed Out.\n" + e);
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.exit(1);
 		}
 		
@@ -77,6 +76,7 @@ public class NetworkConnector {
 	private void initializeSocket(int receivingPort) {
 		try {
 	       socket = new DatagramSocket(receivingPort);
+	       socket.setSoTimeout(15000);
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
