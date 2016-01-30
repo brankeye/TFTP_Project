@@ -39,7 +39,7 @@ public class DataPacketParser extends PacketParser {
 		for (byte b : data) {
 			stream.write(b);
 		}
-		//stream.write(0); // Ending 0
+		stream.write(0); // Ending 0
 
 		return stream.toByteArray();
 	}
@@ -73,6 +73,6 @@ public class DataPacketParser extends PacketParser {
 		if (data.length < 4) {
 			return new byte[] { -1 };
 		}
-		return Arrays.copyOfRange(data, 3, data.length - 1);
+		return Arrays.copyOfRange(data, 4, data.length);
 	}
 }

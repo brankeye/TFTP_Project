@@ -37,7 +37,6 @@ public class Server {
 			DatagramPacket datagramPacket = networkConnector.receive();
 			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
-			System.out.println("\nTHE PROBLEM: " + data[1]);
 			if(RequestPacketParser.isValid(data)) {
 				System.out.println("Starting new thread");
 				Splitter splitter = new Splitter(datagramPacket);
@@ -97,7 +96,7 @@ public class Server {
 					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { done = true; }
 					// send the data in 516 byte chunks
 					try {
-						BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
+						FileInputStream in = new FileInputStream(file);
 						data = new byte[Config.MAX_BYTE_ARR_SIZE - 4];
 						int n;
 						while ((n = in.read(data)) != -1) {
@@ -124,12 +123,14 @@ public class Server {
 							                                       datagramPacket.getAddress(), datagramPacket.getPort());
 					packetReader.readSendPacket(sendPacket);
 					threadedNetworkConnector.send(sendPacket);
+					
 					datagramPacket = threadedNetworkConnector.receive();
+					packetReader.readReceivePacket(datagramPacket);
 					
 					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { done = true; }
 					byte[] clientResponse = datagramPacket.getData();
 					blockNumber = DataPacketParser.getBlockNumber(clientResponse);
-					System.out.println("Block Number: " + blockNumber++);
+					System.out.println("Block Number: " + blockNumber);
 					
 					System.out.println("Data received");
 					
@@ -137,9 +138,9 @@ public class Server {
 					byte[] fileData = DataPacketParser.getData(clientResponse);
 	
 					// will move to somewhere else later
-					BufferedOutputStream out;
+					FileOutputStream out;
 					try {
-						out = new BufferedOutputStream(new FileOutputStream(file));
+						out = new FileOutputStream(file, true);
 						out.write(fileData, 0, fileData.length);
 						out.close();
 					} catch (IOException e) {
