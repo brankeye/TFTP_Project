@@ -31,3 +31,17 @@ Config.java - Some configuration parameters
 NetworkConnector.java - class to help send/receive packets
 
 PacketReader.java - class to print packet information
+
+
+
+
+
+Divided Work:
+Brandon: NetworkConnector, Use Case Map, README
+Jason:   Server, README
+Aaron:   Client, README
+Mazhar:  ErrorSim, UML Class Diagram
+Remy:    All PacketParsers
+
+// There's a bunch of stuff we're missing here though
+
