@@ -6,19 +6,24 @@ import java.net.UnknownHostException;
 import General.Config;
 import General.NetworkConnector;
 import General.PacketReader;
+import NetworkTypes.Operation;
+import PacketParsers.PacketParser;
 
 public class ErrorSimulator {
 
 	// must receive and send to the Client with the clientConnector
-	NetworkConnector clientConnector;
+	private NetworkConnector clientConnector;
 	
 	// must receive and send to the Server with the serverConnector
-	NetworkConnector serverConnector;
+	private NetworkConnector serverConnector;
 	
-	PacketReader     packetReader;
+	private PacketReader     packetReader;
 	
 	private InetAddress serverAddress;
 	private int         serverPort;
+	
+	private InetAddress threadedAddress;
+	private int         threadedPort;
 
 	
 	public ErrorSimulator() {
@@ -45,6 +50,9 @@ public class ErrorSimulator {
 	public void link(){
 		//TODO: Could split try-catch blocks to multiple ones
 		try{
+			// for RRQ/WRQ
+			InetAddress address = serverAddress;
+			int         port    = serverPort;
 						
 			//Receive packet from client
 			//TODO: Add functionality for multiple clients 
@@ -62,7 +70,12 @@ public class ErrorSimulator {
 			//--
 			
 			//Send packet to server
-			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), serverAddress, serverPort);
+			Operation opcode = PacketParser.getOpcode(dpClient.getData());
+			if(opcode == Operation.DATA || opcode == Operation.ACK) {
+				address = threadedAddress;
+				port    = threadedPort;
+			}
+			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
 			System.out.println("Sending to Server at" + serverAddress + ":" + serverPort);
 			serverConnector.send(sendServerPacket);
 			
@@ -70,6 +83,9 @@ public class ErrorSimulator {
 			//byte dataServer[] = new byte[516];
 			//DatagramPacket dpServer = new DatagramPacket(dataServer, dataServer.length);
 			DatagramPacket dpServer = serverConnector.receive();
+			
+			threadedAddress = dpServer.getAddress();
+			threadedPort    = dpServer.getPort();
 			
 			System.out.println("Server responded with:");
 			System.out.println("Response bytes: " + byteToString(dpServer.getData(), dpServer.getLength()));

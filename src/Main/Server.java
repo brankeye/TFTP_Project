@@ -18,8 +18,8 @@ the appropriate acknowledgment to the client that requested the connection.
 */
 public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
-	NetworkConnector networkConnector;
-	PacketReader packetReader;
+	private NetworkConnector networkConnector;
+	private PacketReader packetReader;
 	
 	final static String RELPATH = "src/Main/ServerStorage/";
 
@@ -55,9 +55,11 @@ public class Server {
 
 	private class Splitter implements Runnable {
 		DatagramPacket datagramPacket;
+		NetworkConnector threadedNetworkConnector;
 
 		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket = receivedPacket;
+			threadedNetworkConnector = new NetworkConnector();
 		}
 
 		@Override
@@ -92,14 +94,15 @@ public class Server {
 			} else { // Operation.WRQ
 				res = AckPacketParser.getByteArray(0);
 			}
-			networkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
+			threadedNetworkConnector.send(new DatagramPacket(res, res.length, datagramPacket.getAddress(), datagramPacket.getPort()));
 
 			// read or write file 512 bytes at a time
 			while (true) {
-				datagramPacket = networkConnector.receive();
+				datagramPacket = threadedNetworkConnector.receive();
 				byte[] clientResponse = datagramPacket.getData();
 				
 				Operation clientOpcode = PacketParser.getOpcode(clientResponse);
+				System.out.println("\nClient Opcode: " + clientOpcode + "\n\n");
 				if(clientOpcode == Operation.DATA) {
 					int blockNumber = DataPacketParser.getBlockNumber(clientResponse);
 					System.out.println("Block Number: " + blockNumber);
@@ -120,9 +123,9 @@ public class Server {
 
 					byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
 					DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
-							                                         datagramPacket.getAddress(), datagramPacket.getPort());
+							                                       datagramPacket.getAddress(), datagramPacket.getPort());
 					packetReader.readSendPacket(sendPacket);
-					networkConnector.send(sendPacket);
+					threadedNetworkConnector.send(sendPacket);
 					
 				} else if(clientOpcode == Operation.ACK) {
 					int blockNumber = AckPacketParser.getBlockNumber(clientResponse);
@@ -140,8 +143,9 @@ public class Server {
 						int n;
 						while ((n = in.read(data)) != -1) {
 							byte[] serverRes = DataPacketParser.getByteArray(blockNumber, data);
-							networkConnector.send(new DatagramPacket(serverRes, serverRes.length, datagramPacket.getAddress(),
-									datagramPacket.getPort()));
+							DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
+                                                                           datagramPacket.getAddress(), datagramPacket.getPort());
+							threadedNetworkConnector.send(sendPacket);
 						}
 						in.close();
 					} catch (IOException e) {

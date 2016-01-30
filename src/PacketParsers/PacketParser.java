@@ -23,12 +23,18 @@ public class PacketParser {
 	 * @return string conversion of the byte data.
 	 */
 	public static String getString(byte[] data) {
-		try {  // TODO: See if it's possible to remove null blocks in conversion (don't think so though)
-			return new String(data, "UTF-8"); 
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		return new String("");
+		//try {  // TODO: See if it's possible to remove null blocks in conversion (don't think so though)
+			//return new String(data, "UTF-8");
+			StringBuffer buffer = new StringBuffer();
+			int i = 0;
+			while(i < data.length) {
+				buffer.append((char) data[i++]);
+			}
+			return buffer.toString();
+		//} catch (UnsupportedEncodingException e) {
+		//	e.printStackTrace();
+		//}
+		//return new String("");
 	}
 
 	/**
