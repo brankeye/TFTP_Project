@@ -4,6 +4,8 @@ To set up, import the project folder into Eclipse,
 start the Server, then the ErrorSimulator, and finally the Client
 
 To use, in the Client's prompt type in the type of action (ie. read or write) and the file name, separated by a space, and press Enter
+for example: write test.txt
+             read server.txt
 
 Files
 Client.java - the client that sends read/write requests

@@ -91,7 +91,7 @@ public class Client {
 				
 				// send ACK packet
 				AckPacketParser.getByteArray(blockNumber);
-				packet = new DatagramPacket(ackBuffer, blockNumber, destAddress, destPort);
+				packet = new DatagramPacket(ackBuffer, ackBuffer.length, destAddress, destPort);
 				networkConnector.send(packet);
 				
 				// wait for DATA packet and validate
