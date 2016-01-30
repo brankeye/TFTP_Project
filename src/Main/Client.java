@@ -126,7 +126,7 @@ public class Client {
 		byte[] trimmedData;
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
 		int numBytes      = NOT_ZERO;
-		int blockNumber   = 0;
+		int blockNumber   = 1;
 
 		// open local file for reading
 		try {
