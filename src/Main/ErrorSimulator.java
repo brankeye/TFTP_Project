@@ -25,7 +25,7 @@ public class ErrorSimulator {
 	private InetAddress threadedAddress;
 	private int         threadedPort;
 
-	
+	//create multiple network connectors for client and server
 	public ErrorSimulator() {
 		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, true);
 		serverConnector  = new NetworkConnector();
@@ -46,7 +46,7 @@ public class ErrorSimulator {
 		}
 
 	}
-	
+	//do the intermediate host algorithm -- no error sim for iteration 1
 	public void link(){
 		//TODO: Could split try-catch blocks to multiple ones
 		try{
