@@ -6,6 +6,9 @@ start the Server, then the ErrorSimulator, and finally the Client
 To use, in the Client's prompt type in the type of action (ie. read or write) and the file name, separated by a space, and press Enter
 for example: write test.txt
              read server.txt
+			 
+Where server files are stored: src/Main/ServerStorage
+Where client files are stored: src/Main/ClientStorage
 
 Files
 Client.java - the client that sends read/write requests
