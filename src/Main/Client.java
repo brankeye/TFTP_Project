@@ -162,13 +162,8 @@ public class Client {
 			if (numBytes < 0) {
 				numBytes = 0;
 			}
-			// Trim the buffer in case amount of data read was < 512 bytes
-			if (numBytes < 512) {
-				trimmedData = new byte[numBytes];
-				System.arraycopy(dataBuffer, 0, trimmedData, 0, numBytes);
-			} else {
-				trimmedData = dataBuffer;
-			}
+
+			trimmedData = dataBuffer;
 			
 			// send packet
 			trimmedData = DataPacketParser.getByteArray(blockNumber, trimmedData);
