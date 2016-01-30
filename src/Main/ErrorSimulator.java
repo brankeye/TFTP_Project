@@ -45,17 +45,13 @@ public class ErrorSimulator {
 	public void link(){
 		//TODO: Could split try-catch blocks to multiple ones
 		try{
-			//Create packet of max filled packet
-			//byte dataClient[] = new byte[516];
-			//DatagramPacket dpClient = new DatagramPacket(dataClient, dataClient.length);
-			
+						
 			//Receive packet from client
 			//TODO: Add functionality for multiple clients 
 			DatagramPacket dpClient = clientConnector.receive();
 			InetAddress clientAddress = dpClient.getAddress();
 			int         clientPort	  = dpClient.getPort();		//used to send back to client
 			System.out.println("Client requesting from: " + dpClient.getAddress() + ":" + dpClient.getPort());
-			System.out.println("Client sent:" + dpClient.getData());
 			System.out.println("Client sent String:" +  byteToString(dpClient.getData(), dpClient.getLength()));
 		    
 			
@@ -76,7 +72,7 @@ public class ErrorSimulator {
 			DatagramPacket dpServer = serverConnector.receive();
 			
 			System.out.println("Server responded with:");
-			System.out.println("Response bytes: " + dpServer.getData());
+			System.out.println("Response bytes: " + byteToString(dpServer.getData(), dpServer.getLength()));
 				
 			//Send server's response to client
 			DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
@@ -92,7 +88,7 @@ public class ErrorSimulator {
 	public String byteToString(byte[] b, int len){
 			String s = new String(b);  // Create new String Object and assign byte[] to it
 			try {
-				s = new String(b, "UTF-8");  // Best way to decode using "UTF-8"
+				s = new String(b, "UTF-8");  // decode using "UTF-8"
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
