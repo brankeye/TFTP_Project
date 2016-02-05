@@ -3,6 +3,8 @@ package Main;
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
+import java.util.Scanner;
+
 import General.Config;
 import General.NetworkConnector;
 import General.PacketReader;
@@ -19,37 +21,50 @@ the appropriate acknowledgment to the client that requested the connection.
 public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
 	private NetworkConnector networkConnector;
-	private PacketReader packetReader;
+	private PacketReader     packetReader;
+	private ShutdownHandler  shutdownHandler;
 	
 	final static String RELPATH = "src/Main/ServerStorage/";
 
 	// may or may not need this, will look further into this
 	public Server() {
 		networkConnector = new NetworkConnector(Config.SERVER_PORT, true);
-		packetReader = new PacketReader("Server");
+		packetReader     = new PacketReader("Server");
+		shutdownHandler  = new ShutdownHandler();
+		
+	}
+	
+	public void initialize() {
+		Thread t = new Thread(shutdownHandler);
+		t.start();
 	}
 
 	// sends and receives messages
 	public void sendReceive() {
-		while (true) {
+		while (!networkConnector.isClosed()) {
 			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
 			DatagramPacket datagramPacket = networkConnector.receive();
-			System.out.println("Packet Received!");
 			byte[] data = datagramPacket.getData();
+			
+			// when the isValid function evaluates an empty/incorrect data array, it prints out Invalid Data: Opcode should be 1 or 2
+			// should update the error code printouts to be more accurate/verbose
 			if(RequestPacketParser.isValid(data)) {
+				System.out.println("Packet Received!");
 				System.out.println("Starting new thread");
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
 			} else {} // error?
 		}
+		
+		// Assuming the control flow of the threads doesn't simply end if the main thread does? Seems so.
 	}
 
 	public static void main(String[] args) {
 		Server server = new Server();
+		server.initialize();
 		server.sendReceive();
-
 	}
 
 	private class Splitter implements Runnable {
@@ -148,6 +163,29 @@ public class Server {
 						e.printStackTrace();
 					}
 				}
+			}
+		}
+	}
+	
+	private class ShutdownHandler implements Runnable {
+		
+		private Scanner scanner;
+		
+		public ShutdownHandler() {
+			scanner = new Scanner(System.in);
+		}
+		
+		@Override
+		public void run() {
+			// read and normalize input
+			String input = scanner.nextLine().trim(); 
+			String normalizedInput = input.toLowerCase();
+			// take action based on input
+			if (normalizedInput.startsWith("shutdown")) {
+				System.out.println("Shutting down receive socket.");
+				networkConnector.close();
+			} else if (normalizedInput.length() > 0) {
+				System.out.println("Command not recognized: " + input);
 			}
 		}
 	}

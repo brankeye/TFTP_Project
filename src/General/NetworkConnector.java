@@ -33,8 +33,6 @@ public class NetworkConnector {
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely ");
 			System.out.println("Receive Socket Timed Out.\n" + e);
-			//e.printStackTrace();
-			System.exit(1);
 		}
 		
 		return receivePacket;
@@ -63,6 +61,8 @@ public class NetworkConnector {
 	public void close() {
 		socket.close();
 	}
+	
+	public boolean isClosed() { return socket.isClosed(); }
 	
 	private void initializeSocket() {
 		try {
