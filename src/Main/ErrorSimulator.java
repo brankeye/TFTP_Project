@@ -8,6 +8,7 @@ import java.util.Scanner;
 import General.Config;
 import General.NetworkConnector;
 import General.PacketReader;
+import General.SimulationMode;
 import NetworkTypes.Operation;
 import PacketParsers.PacketParser;
 
@@ -27,8 +28,8 @@ public class ErrorSimulator {
 	private InetAddress threadedAddress;
 	private int         threadedPort;
 	
-	private Scanner     scanner;
-	private String      simMode;
+	private Scanner        scanner;
+	private SimulationMode simMode;
 
 	//create multiple network connectors for client and server
 	public ErrorSimulator() {
@@ -74,7 +75,6 @@ public class ErrorSimulator {
 			//-- ADD CALLS TO ERROR FUNCTION ON PACKETS HERE -- 
 			
 			
-			//--
 			
 			//Send packet to server
 			Operation opcode = PacketParser.getOpcode(dpClient.getData());
@@ -82,7 +82,9 @@ public class ErrorSimulator {
 				address = threadedAddress;
 				port    = threadedPort;
 			}
-			DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
+			
+			//DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
+			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
 			System.out.println("Sending to Server at" + serverAddress + ":" + serverPort);
 			serverConnector.send(sendServerPacket);
 			
@@ -98,13 +100,124 @@ public class ErrorSimulator {
 			System.out.println("Response bytes: " + byteToString(dpServer.getData(), dpServer.getLength()));
 				
 			//Send server's response to client
-			DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
+			//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
+			DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
 			clientConnector.send(responsePacket);
 		}
 	
 		catch (Exception e){
 			e.printStackTrace();
 		}
+	}
+	
+	// returns the modified datagrampacket
+	private DatagramPacket handleSimulationModes(DatagramPacket simPacket, InetAddress address, int port) {
+		switch(simMode) {
+			case DEFAULT_MODE:           { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
+			case CORRUPT_OPERATION_MODE: { return handleCorruptOperationMode(simPacket, address, port); }
+			case CORRUPT_BLOCK_NUM_MODE: { return handleCorruptBlockNumMode(simPacket, address, port); }
+			case REMOVE_BLOCK_NUM_MODE:  { return handleRemoveBlockNumMode(simPacket, address, port); }
+			case CORRUPT_CLIENT_TRANSFER_ID_MODE:  { return handleCorruptClientTransferIDMode(simPacket, address, port); }
+			case CORRUPT_SERVER_TRANSFER_ID_MODE:  { return handleCorruptServerTransferIDMode(simPacket, address, port); }
+			case APPEND_PACKET_MODE:  { return handleAppendPacketMode(simPacket, address, port); }
+			case SHRINK_PACKET_MODE:  { return handleShrinkPacketMode(simPacket, address, port); }
+			case CORRUPT_FILENAME_MODE:  { return handleCorruptFilenameMode(simPacket, address, port); }
+			case CORRUPT_TRANSFER_MODE:  { return handleCorruptTransferMode(simPacket, address, port); }
+			case CORRUPT_FILENAME_DELIMITER_MODE:  { return handleCorruptFilenameDelimiterMode(simPacket, address, port); }
+			case CORRUPT_TRANSFER_DELIMITER_MODE:  { return handleCorruptTransferDelimiterMode(simPacket, address, port); }
+			case REMOVE_FILENAME_MODE:  { return handleRemoveFilenameMode(simPacket, address, port); }
+			case REMOVE_TRANSFER_MODE:  { return handleRemoveTransferMode(simPacket, address, port); }
+			case REMOVE_FILENAME_DELIMITER_MODE:  { return handleRemoveFilenameDelimiterMode(simPacket, address, port); }
+			case REMOVE_TRANSFER_DELIMITER_MODE:  { return handleRemoveTransferDelimiterMode(simPacket, address, port); }
+			case CORRUPT_DATA_MODE:  { return handleCorruptDataMode(simPacket, address, port); }
+			case REMOVE_DATA_MODE:  { return handleRemoveDataMode(simPacket, address, port); }
+			default: return null;
+		}
+	}
+		
+	// 1
+	private DatagramPacket handleCorruptOperationMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 2
+	private DatagramPacket handleCorruptBlockNumMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 3
+	private DatagramPacket handleRemoveBlockNumMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 4
+	private DatagramPacket handleCorruptClientTransferIDMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 5
+	private DatagramPacket handleCorruptServerTransferIDMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 6
+	private DatagramPacket handleAppendPacketMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 7
+	private DatagramPacket handleShrinkPacketMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 8
+	private DatagramPacket handleCorruptFilenameMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 9
+	private DatagramPacket handleCorruptTransferMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 10
+	private DatagramPacket handleCorruptFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 11
+	private DatagramPacket handleCorruptTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 12
+	private DatagramPacket handleRemoveFilenameMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 13
+	private DatagramPacket handleRemoveTransferMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 14
+	private DatagramPacket handleRemoveFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 15
+	private DatagramPacket handleRemoveTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 16
+	private DatagramPacket handleCorruptDataMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
+	}
+	
+	// 17
+	private DatagramPacket handleRemoveDataMode(DatagramPacket simPacket, InetAddress address, int port) {
+		return null;
 	}
 	
 		//convert bytes to string to display --- for future use
@@ -122,21 +235,28 @@ public class ErrorSimulator {
 	public void simulationMode() {
 		boolean isValid = false;
 		String input = "";
+		int value    = -1;
 		
 		while(!isValid) {
-			System.out.println("Please choose an option:");
+			System.out.println("Please select a simulation mode:");
 			input = scanner.nextLine();
 		
 			// assume input is valid, if not valid, loop again
 			isValid = true;
-			switch(input) {
-				case "0": { System.out.println("Error mode 0 chosen..."); break; }
-				case "1": { System.out.println("Error mode 1 chosen..."); break; }
-				default: isValid = false;
+			try {
+				value = Integer.parseInt(input);
+			} catch(NumberFormatException e) {
+				isValid = false;
+			}
+			
+			if(isValid) {
+				if(value < 0 || value > SimulationMode.values().length - 1) {
+					isValid = false;
+				}
 			}
 		}
 		
-		// this is the error sim mode the user has chosen
-		simMode = input;
+		simMode = SimulationMode.values()[value];
+		System.out.println("Using " + simMode.toString()); 
 	}
 }

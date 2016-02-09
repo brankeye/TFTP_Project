@@ -48,3 +48,24 @@ Remy:    All PacketParsers, minor stuff in Server/Client
 
 // There's a bunch of stuff we're missing here though
 
+
+Error Simulator UI Codes:
+0 -	 DEFAULT_MODE("Default"),
+1 -  CORRUPT_OPERATION_MODE("Corrupt Operation"),
+2 -	 CORRUPT_BLOCK_NUM_MODE("Corrupt Block Number"),
+3 -	 REMOVE_BLOCK_NUM_MODE("Remove Block Number"),
+4 -	 CORRUPT_CLIENT_TRANSFER_ID_MODE("Corrupt Client Transfer ID"),
+5 -	 CORRUPT_SERVER_TRANSFER_ID_MODE("Corrupt Server Transfer ID"),
+6 -	 APPEND_PACKET_MODE("Append Packet Mode"),
+7 -	 SHRINK_PACKET_MODE("Append Packet Mode"),
+8 -	 CORRUPT_FILENAME_MODE("Corrupt Filename"),
+9 -	 CORRUPT_TRANSFER_MODE("Corrupt Transfer"),
+10 - CORRUPT_FILENAME_DELIMITER_MODE("Corrupt Filename Delimiter"),
+11 - CORRUPT_TRANSFER_DELIMITER_MODE("Corrupt Transfer Delimiter"),
+12 - REMOVE_FILENAME_MODE("Remove Filename"),
+13 - REMOVE_TRANSFER_MODE("Remove Transfer"),
+14 - REMOVE_FILENAME_DELIMITER_MODE("Remove Filename Delimiter"),
+15 - REMOVE_TRANSFER_DELIMITER_MODE("Remove Transfer Delimiter"),
+16 - CORRUPT_DATA_MODE("Corrupt Data"),
+17 - REMOVE_DATA_MODE("Remove Data");
+
