@@ -2,6 +2,8 @@ package Main;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.InputMismatchException;
+import java.util.Scanner;
 
 import General.Config;
 import General.NetworkConnector;
@@ -24,12 +26,16 @@ public class ErrorSimulator {
 	
 	private InetAddress threadedAddress;
 	private int         threadedPort;
+	
+	private Scanner     scanner;
+	private String      simMode;
 
 	//create multiple network connectors for client and server
 	public ErrorSimulator() {
 		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, true);
 		serverConnector  = new NetworkConnector();
 		packetReader     = new PacketReader("ErrorSim");
+		scanner          = new Scanner(System.in);
 		
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);
@@ -41,6 +47,7 @@ public class ErrorSimulator {
 	
 	public static void main(String[] args) {
 		ErrorSimulator es = new ErrorSimulator();
+		es.simulationMode();
 		while(true){
 			es.link();
 		}
@@ -110,7 +117,26 @@ public class ErrorSimulator {
 			}
 			return s;
 		}
-		//Error creation  --- for future use
-	public void createError(int level){
+	
+		// this gets the simulation mode from the error sim user
+	public void simulationMode() {
+		boolean isValid = false;
+		String input = "";
+		
+		while(!isValid) {
+			System.out.println("Please choose an option:");
+			input = scanner.nextLine();
+		
+			// assume input is valid, if not valid, loop again
+			isValid = true;
+			switch(input) {
+				case "0": { System.out.println("Error mode 0 chosen..."); break; }
+				case "1": { System.out.println("Error mode 1 chosen..."); break; }
+				default: isValid = false;
+			}
+		}
+		
+		// this is the error sim mode the user has chosen
+		simMode = input;
 	}
 }
