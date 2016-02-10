@@ -1,0 +1,12 @@
+package NetworkTypes;
+
+public enum ErrorCode {
+	UNDEF,
+	FILE_NOT_FOUND,
+	ACCESS_VIOLATION,
+	DISK_FULL,
+	ILLEGAL_OPERATION,
+	UNKNOWN_TID,
+	FILE_EXISTS,
+	NO_SUCH_USER
+}
