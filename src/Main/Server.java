@@ -78,6 +78,8 @@ public class Server {
 		public void run() {
 			// read the packet
 			byte[] data = datagramPacket.getData();
+			byte[] dataBuffer = new byte[Config.MAX_PAYLOAD_SIZE];
+			byte[] packetBuffer;
 			
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
@@ -97,42 +99,56 @@ public class Server {
 				}
 			}
 
+			
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
 			Operation opcode = PacketParser.getOpcode(data);
 			if(opcode == Operation.RRQ) {
-				int blockNumber = 1;
-				boolean done = false;
+				System.out.println("READ REQUEST");
 				
-				while(!done) {
-					
-					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) {
-						done = true;
-					}
-					
-					// send the data in 516 byte chunks
-					try {
-						FileInputStream in = new FileInputStream(file);
-						data = new byte[Config.MAX_BYTE_ARR_SIZE - 4];
-						int numBytes;
-						int n;
-						//numBytes = in.read(data, 0, 512);
+				int     blockNumber = 1;
+				boolean done        = false;
+				int     numBytes    = 0;
+				FileInputStream in  = null;
+				
+				try {
+					in = new FileInputStream(file);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 
-						while ((n = in.read(data)) != -1) {
-							byte[] serverRes = DataPacketParser.getByteArray(blockNumber++, data);
-							DatagramPacket sendPacket = new DatagramPacket(serverRes, n + 4, 
-	                                                                       datagramPacket.getAddress(), datagramPacket.getPort());
-							threadedNetworkConnector.send(sendPacket);
-							
-							threadedNetworkConnector.receive();
-						}
-						
-						in.close();
-						
+				while(!done) {
+
+					try {
+						numBytes = in.read(dataBuffer, 0, Config.MAX_PAYLOAD_SIZE);
 					} catch (IOException e) {
 						e.printStackTrace();
+						System.exit(1);
 					}
+					
+					if (numBytes < 512) {
+						done = true;
+						if (numBytes < 0) {
+							numBytes = 0;
+						}
+					}
+					
+					// send packet
+					packetBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
+					DatagramPacket packet = new DatagramPacket(packetBuffer, numBytes + 4, datagramPacket.getAddress(), datagramPacket.getPort());
 
+					threadedNetworkConnector.send(packet);
+					
+					packet = threadedNetworkConnector.receive();
+				
+				}
+				
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
 				}
 				
 			} else { // Operation.WRQ
