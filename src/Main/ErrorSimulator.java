@@ -28,8 +28,9 @@ public class ErrorSimulator {
 	
 	private Scanner        scanner;
 	private SimulationMode simMode;
-
-	private boolean lastReadPacket = false;
+	
+	InetAddress clientAddress;
+	int         clientPort;
 
 	//create multiple network connectors for client and server
 	public ErrorSimulator() {
@@ -49,27 +50,21 @@ public class ErrorSimulator {
 		ErrorSimulator es = new ErrorSimulator();
 		es.simulationMode();
 		while(true){
-			es.link();
+			es.clientLink();
+			es.serverLink();
 		}
 
 	}
-	//do the intermediate host algorithm -- no error sim for iteration 1
-	public void link(){
-
+	
+	private void clientLink() {
 		// for RRQ/WRQ
 		InetAddress address = serverAddress;
 		int         port    = serverPort;
 		
 		//Receive packet from client
-
 		DatagramPacket dpClient   = clientConnector.receive();
-		InetAddress clientAddress = dpClient.getAddress();
-		int         clientPort	  = dpClient.getPort();		//used to send back to client
-
-		//-- ADD CALLS TO ERROR FUNCTION ON PACKETS HERE -- 
-		
-		
-		//--
+		clientAddress = dpClient.getAddress();
+		clientPort	  = dpClient.getPort();		//used to send back to client
 		
 		//Send packet to server
 		Operation opcode = PacketParser.getOpcode(dpClient.getData());
@@ -77,33 +72,22 @@ public class ErrorSimulator {
 			address = threadedAddress;
 			port    = threadedPort;
 		}
-		DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
+		
+		//DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
+		DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
 		serverConnector.send(sendServerPacket);
-
+	}
+	
+	private void serverLink() {
+		//Receive the response from server
+		DatagramPacket dpServer = serverConnector.receive();
+		threadedAddress = dpServer.getAddress();
+		threadedPort    = dpServer.getPort();
 		
-		if (!lastReadPacket) {
-			//Receive the response from server
-			DatagramPacket dpServer = serverConnector.receive();
-
-			opcode = PacketParser.getOpcode(dpServer.getData());
-			if (opcode == Operation.DATA) {
-				if (dpServer.getLength() < Config.MAX_BYTE_ARR_SIZE) {
-					System.out.println("LAST READ PACKET");
-					lastReadPacket = true;
-				}
-			}
-			
-			//if (!lastReadPacket) {
-				threadedAddress = dpServer.getAddress();
-				threadedPort    = dpServer.getPort();
-		
-				//Send server's response to client
-				DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
-				clientConnector.send(responsePacket);
-			//}
-		} else {
-			lastReadPacket = false;
-		}
+		//Send server's response to client
+		//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
+		DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
+		clientConnector.send(responsePacket);
 	}
 	
 	// returns the modified datagrampacket
