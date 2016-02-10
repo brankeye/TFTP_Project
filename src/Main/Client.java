@@ -7,13 +7,11 @@ import NetworkTypes.Operation;
 import PacketParsers.AckPacketParser;
 import PacketParsers.DataPacketParser;
 import PacketParsers.RequestPacketParser;
-//import Main.*;
 
 public class Client {
 
 	// can send and receive packets
 	private NetworkConnector networkConnector;
-	private PacketReader     packetReader;
 	
 	private InetAddress destAddress;
 	private int         destPort;
@@ -32,7 +30,6 @@ public class Client {
 		scanner          = new Scanner(System.in);
 		
 		networkConnector = new NetworkConnector();
-		packetReader     = new PacketReader("Client");
 
 		try {
 			destAddress = InetAddress.getByName(Config.ERR_SIM_ADDRESS);
@@ -40,28 +37,26 @@ public class Client {
 			e.printStackTrace();
 		}
 		this.destPort = Config.ERR_SIM_PORT;
-		
-		
+		//this.destPort = Config.SERVER_PORT;
+
 	}
 	
 	// reads a server-hosted file and writes it locally
 	private int read(String filename) {
 		
 		DatagramPacket packet = null;
-		int blockNumber   = 0;
+		int blockNumber   = 1;
 		byte[] rrqBuffer  = RequestPacketParser.getByteArray(Operation.RRQ, filename);
-		byte[] ackBuffer  = AckPacketParser.getByteArray(blockNumber);
+		byte[] ackBuffer  = new byte[4];
 		boolean done      = false;
 		
 		
 		// send RRQ packet
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
-		packetReader.readSendPacket(packet);
 		
 		// wait for ACK packet and validate
 		packet = networkConnector.receive();
-		packetReader.readReceivePacket(packet);
 		if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
 			return 0;
 		}
@@ -79,8 +74,8 @@ public class Client {
 			
 			if (packet.getLength() > 4) {
 				try {
-					outputStream.write(DataPacketParser.getData(packet.getData()));
-				} catch (IOException e) {
+					outputStream.write(DataPacketParser.getData(packet.getData()), 0, packet.getLength() - 4);
+	 			} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
 				}
@@ -90,15 +85,16 @@ public class Client {
 				}
 				
 				// send ACK packet
-				AckPacketParser.getByteArray(blockNumber);
+				ackBuffer = AckPacketParser.getByteArray(blockNumber);
 				packet = new DatagramPacket(ackBuffer, ackBuffer.length, destAddress, destPort);
 				networkConnector.send(packet);
 				
-				// wait for DATA packet and validate
-				packet = networkConnector.receive();
-				packetReader.readReceivePacket(packet);
-				if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
-					done = true;
+				if (!done) {
+					// wait for DATA packet and validate
+					packet = networkConnector.receive();
+					if (AckPacketParser.getOpcode(packet.getData()) != Operation.DATA) {
+						done = true;
+					}
 				}
 
 			} else  {
@@ -123,10 +119,12 @@ public class Client {
 		
 		DatagramPacket packet = null;
 		byte[] dataBuffer = new byte[512];
-		byte[] trimmedData;
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
-		int numBytes      = NOT_ZERO;
+		byte[] packetBuffer;
 		int blockNumber   = 1;
+		boolean done      = false;
+		int numBytes      = NOT_ZERO;
+		
 
 		// open local file for reading
 		try {
@@ -139,17 +137,15 @@ public class Client {
 		// send WRQ packet
 		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
-		packetReader.readSendPacket(packet);
 				
 		// wait for ACK packet and validate packet
 		packet = networkConnector.receive();
-		packetReader.readReceivePacket(packet);
 		if (AckPacketParser.getOpcode(packet.getData()) != Operation.ACK) {
 			return 1;
 		}
 
 		// read local file in blocks of 512 bytes, send DATA packet
-		while (numBytes > 0) {
+		while (!done) {
 			try {
 				numBytes = inputStream.read(dataBuffer, 0, 512);
 			} catch (IOException e) {
@@ -157,23 +153,20 @@ public class Client {
 				System.exit(1);
 			}
 
-			System.out.println("numBytes = " + numBytes);
-			
-			if (numBytes < 0) {
-				numBytes = 0;
+			if (numBytes < 512) {
+				done = true;
+				if (numBytes < 0) {
+					numBytes = 0;
+				}
 			}
 
-			trimmedData = dataBuffer;
-			
 			// send packet
-			trimmedData = DataPacketParser.getByteArray(blockNumber, trimmedData);
-			packet = new DatagramPacket(trimmedData, trimmedData.length, destAddress, Config.ERR_SIM_PORT);
-			
+			packetBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
+			packet = new DatagramPacket(packetBuffer, numBytes + 4, destAddress, Config.ERR_SIM_PORT);
+
 			networkConnector.send(packet);
-			packetReader.readSendPacket(packet);
 			
 			packet = networkConnector.receive();
-			packetReader.readReceivePacket(packet);
 			if (AckPacketParser.getOpcode(packet.getData()) != Operation.ACK) {
 				return 1;
 			}
@@ -218,7 +211,6 @@ public class Client {
 			if (normalizedInput.startsWith("read")) {
 				filename = input.substring(4, input.length()).trim(); 
 				if (filename.length() > 0) {
-					//System.out.println("ReadRequest: \"" + filename + "\"");
 					client.read(filename);
 				} else {
 					System.out.println("Error - filename not supplied");
@@ -226,7 +218,6 @@ public class Client {
 			} else if (normalizedInput.startsWith("write")) {
 				filename = input.substring(5, input.length()).trim();
 				if (filename.length() > 0) {
-					//System.out.println("WriteRequest: " + filename);
 					client.write(filename);
 				} else {
 					System.out.println("Error - filename not supplied");
