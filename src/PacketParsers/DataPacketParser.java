@@ -39,7 +39,6 @@ public class DataPacketParser extends PacketParser {
 		for (byte b : data) {
 			stream.write(b);
 		}
-		stream.write(0); // Ending 0
 
 		return stream.toByteArray();
 	}
