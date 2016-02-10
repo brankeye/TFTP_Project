@@ -49,7 +49,7 @@ public class Server {
 			
 			// when the isValid function evaluates an empty/incorrect data array, it prints out Invalid Data: Opcode should be 1 or 2
 			// should update the error code printouts to be more accurate/verbose
-			if(RequestPacketParser.isValid(data)) {
+			if(RequestPacketParser.isValid(data, datagramPacket.getLength())) {
 				System.out.println("Packet Received!");
 				System.out.println("Starting new thread");
 				Splitter splitter = new Splitter(datagramPacket);
@@ -85,7 +85,7 @@ public class Server {
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
 			System.out.println("File name: " + file.getName());
-			Operation requestOpcode = PacketParser.getOpcode(data);
+			Operation requestOpcode = PacketParser.getOpcode(data,datagramPacket.getLength());
 			if (!file.exists()) {
 				if (requestOpcode == Operation.WRQ) {
 					try {
@@ -101,7 +101,7 @@ public class Server {
 
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
-			Operation opcode = PacketParser.getOpcode(data);
+			Operation opcode = PacketParser.getOpcode(data,datagramPacket.getLength());
 			if(opcode == Operation.RRQ) {
 				int blockNumber = 1;
 				System.out.println("Block Number: " + blockNumber);

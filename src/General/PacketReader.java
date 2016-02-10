@@ -22,11 +22,11 @@ public class PacketReader {
  	    // not tested yet
  	    byte[] data = receivePacket.getData();
  	    String str  = "";
- 	    switch(PacketParser.getOpcode(data)) {
- 	    	case RRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case WRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case DATA: str = DataPacketParser.getString(data); break;
- 	    	case ACK:  str = AckPacketParser.getString(data); break;
+ 	    switch(PacketParser.getOpcode(data,receivePacket.getLength())) {
+ 	    	case RRQ:  str = RequestPacketParser.getString(data, receivePacket.getLength()); break;
+ 	    	case WRQ:  str = RequestPacketParser.getString(data, receivePacket.getLength()); break;
+ 	    	case DATA: str = DataPacketParser.getString(data, receivePacket.getLength()); break;
+ 	    	case ACK:  str = AckPacketParser.getString(data, receivePacket.getLength()); break;
  	    	default:   break;
  	    }
  	    System.out.print("String: '" + str + "'\n");
@@ -51,11 +51,11 @@ public class PacketReader {
 	    // not tested yet
  	    byte[] data = sendPacket.getData();
  	    String str  = "";
- 	    switch(PacketParser.getOpcode(data)) {
- 	    	case RRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case WRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case DATA: str = DataPacketParser.getString(data); break;
- 	    	case ACK:  str = AckPacketParser.getString(data); break;
+ 	    switch(PacketParser.getOpcode(data,sendPacket.getLength())) {
+ 	    	case RRQ:  str = RequestPacketParser.getString(data, sendPacket.getLength()); break;
+ 	    	case WRQ:  str = RequestPacketParser.getString(data, sendPacket.getLength()); break;
+ 	    	case DATA: str = DataPacketParser.getString(data, sendPacket.getLength()); break;
+ 	    	case ACK:  str = AckPacketParser.getString(data, sendPacket.getLength()); break;
  	    	default:   break;
  	    }
  	    System.out.print("String: '" + str + "'\n");

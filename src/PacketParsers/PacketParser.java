@@ -22,19 +22,12 @@ public class PacketParser {
 	 *            the data byte array taken from the a UDP datagram packet.
 	 * @return string conversion of the byte data.
 	 */
-	public static String getString(byte[] data) {
-		//try {  // TODO: See if it's possible to remove null blocks in conversion (don't think so though)
-			//return new String(data, "UTF-8");
-			StringBuffer buffer = new StringBuffer();
-			int i = 0;
-			while(i < data.length) {
-				buffer.append((char) data[i++]);
-			}
-			return buffer.toString();
-		//} catch (UnsupportedEncodingException e) {
-		//	e.printStackTrace();
-		//}
-		//return new String("");
+	public static String getString(byte[] data, int length) {
+		StringBuffer buffer = new StringBuffer();
+		for(int i = 0 ; i < length; i++) {
+			buffer.append((char) data[i++]);
+		}
+		return buffer.toString();
 	}
 
 	/**
@@ -45,8 +38,8 @@ public class PacketParser {
 	 *            the data byte array taken from the a UDP datagrampacket.
 	 * @return the operation enum associated with the second index of the data.
 	 */
-	public static Operation getOpcode(byte[] data) {
-		if (data == null || data.length < 2) {
+	public static Operation getOpcode(byte[] data, int length) {
+		if (data == null || length < 2) {
 			return Operation.INVALID;
 		}
 		for (int i = 1; i < Operation.values().length; ++i) {
