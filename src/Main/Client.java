@@ -72,7 +72,7 @@ public class Client {
 		// loop while receiving data packets
 		while (! done) {
 			
-			if (packet.getLength() > 4) {
+			if (packet.getLength() > 3) {
 				try {
 					outputStream.write(DataPacketParser.getData(packet.getData()), 0, packet.getLength() - 4);
 	 			} catch (IOException e) {
