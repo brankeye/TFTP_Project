@@ -23,8 +23,8 @@ public class ErrorSimulator {
 	private InetAddress serverAddress;
 	private int         serverPort;
 	
-	private InetAddress threadedAddress;
-	private int         threadedPort;
+	private InetAddress threadAddress;
+	private int         threadPort;
 	
 	private Scanner        scanner;
 	private SimulationMode simMode;
@@ -50,19 +50,51 @@ public class ErrorSimulator {
 		ErrorSimulator es = new ErrorSimulator();
 		es.simulationMode();
 		while(true){
-			es.clientLink();
-			es.serverLink();
+			es.waitForRequest();
+
+			//es.clientLink();
+			//es.serverLink();
 		}
 
 	}
 	
-	private void clientLink() {
+	private void waitForRequest() {
 		// for RRQ/WRQ
 		InetAddress address = serverAddress;
 		int         port    = serverPort;
-		
+		Operation   opcode  = Operation.INVALID;
+				
 		//Receive packet from client
-		DatagramPacket dpClient   = clientConnector.receive();
+		DatagramPacket dpClient = clientConnector.receive();
+		opcode = PacketParser.getOpcode(dpClient.getData());
+		clientAddress = dpClient.getAddress();
+		clientPort    = dpClient.getPort();
+		
+		if (opcode == Operation.WRQ) {
+			// forward packet to server
+			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
+			serverConnector.send(sendServerPacket);
+			
+			// wait for ACK from server
+			DatagramPacket dpServer   = serverConnector.receive();
+			InetAddress threadAddress = dpServer.getAddress();
+			int         threadPort    = dpServer.getPort();
+			
+			// forward ACK to client
+			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
+			clientConnector.send(dpClient);
+			
+			wrqLink(dpClient, threadAddress, threadPort);
+		} else if (opcode == Operation.RRQ) {
+			// forward packet to server
+			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
+			serverConnector.send(sendServerPacket);
+
+			rrqLink(clientAddress, clientPort);
+		} else {
+			// presumably this is very bad?
+		}
+		/*
 		clientAddress = dpClient.getAddress();
 		clientPort	  = dpClient.getPort();		//used to send back to client
 		
@@ -76,9 +108,79 @@ public class ErrorSimulator {
 		//DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
 		DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
 		serverConnector.send(sendServerPacket);
+		*/
 	}
 	
-	private void serverLink() {
+	private void wrqLink(DatagramPacket dpClient, InetAddress threadAddress, int threadPort) {
+		System.out.println("WRQ LINK");
+		boolean     done    = false;
+		Operation   opcode  = Operation.INVALID;
+		
+		//Receive packet from client
+		System.out.println("CLIENT SEND DATA");
+		dpClient     = clientConnector.receive();
+		
+		while (!done) {
+
+			clientAddress = dpClient.getAddress();
+			clientPort	  = dpClient.getPort();		//used to send back to client
+
+			opcode = PacketParser.getOpcode(dpClient.getData());
+			if (opcode == Operation.DATA) {		
+				if (dpClient.getLength() < Config.MAX_BYTE_ARR_SIZE) {
+					done = true;
+					System.out.println("DONE WRITE");
+				}
+			}
+			
+			// send packet to server
+			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
+			serverConnector.send(sendServerPacket);
+			
+			// wait for ACK from server
+			DatagramPacket dpServer = serverConnector.receive();
+			
+			// forward ACK to client
+			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
+			clientConnector.send(dpClient);
+			
+			if (!done) {
+				dpClient = clientConnector.receive();
+			}
+		}
+	}
+	
+	private void rrqLink(InetAddress clientAddress, int clientPort) {
+		Operation opcode = Operation.INVALID;
+		boolean done     = false;
+		
+		while (!done) {
+			// receive DATA from server
+			DatagramPacket dpServer = serverConnector.receive();
+			threadAddress = dpServer.getAddress();
+			threadPort    = dpServer.getPort();
+			
+			opcode = PacketParser.getOpcode(dpServer.getData());
+			if (opcode == Operation.DATA) {		
+				if (dpServer.getLength() < Config.MAX_BYTE_ARR_SIZE) {
+					done = true;
+					System.out.println("DONE READ");
+				}
+			}
+			
+			//Send server's response to client
+			//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
+			DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
+			clientConnector.send(responsePacket);
+			
+			// receive ACK from client
+			DatagramPacket dpClient = clientConnector.receive();
+			
+			// forward ACK to server
+			dpServer = handleSimulationModes(dpClient, threadAddress, threadPort);
+			serverConnector.send(dpServer);
+		}
+		/*
 		//Receive the response from server
 		DatagramPacket dpServer = serverConnector.receive();
 		threadedAddress = dpServer.getAddress();
@@ -88,29 +190,31 @@ public class ErrorSimulator {
 		//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
 		DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
 		clientConnector.send(responsePacket);
+		*/
+		
 	}
 	
 	// returns the modified datagrampacket
 	private DatagramPacket handleSimulationModes(DatagramPacket simPacket, InetAddress address, int port) {
 		switch(simMode) {
-			case DEFAULT_MODE:           { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
-			case CORRUPT_OPERATION_MODE: { return handleCorruptOperationMode(simPacket, address, port); }
-			case CORRUPT_BLOCK_NUM_MODE: { return handleCorruptBlockNumMode(simPacket, address, port); }
-			case REMOVE_BLOCK_NUM_MODE:  { return handleRemoveBlockNumMode(simPacket, address, port); }
-			case CORRUPT_CLIENT_TRANSFER_ID_MODE:  { return handleCorruptClientTransferIDMode(simPacket, address, port); }
-			case CORRUPT_SERVER_TRANSFER_ID_MODE:  { return handleCorruptServerTransferIDMode(simPacket, address, port); }
-			case APPEND_PACKET_MODE:  { return handleAppendPacketMode(simPacket, address, port); }
-			case SHRINK_PACKET_MODE:  { return handleShrinkPacketMode(simPacket, address, port); }
-			case CORRUPT_FILENAME_MODE:  { return handleCorruptFilenameMode(simPacket, address, port); }
-			case CORRUPT_TRANSFER_MODE:  { return handleCorruptTransferMode(simPacket, address, port); }
-			case CORRUPT_FILENAME_DELIMITER_MODE:  { return handleCorruptFilenameDelimiterMode(simPacket, address, port); }
-			case CORRUPT_TRANSFER_DELIMITER_MODE:  { return handleCorruptTransferDelimiterMode(simPacket, address, port); }
-			case REMOVE_FILENAME_MODE:  { return handleRemoveFilenameMode(simPacket, address, port); }
-			case REMOVE_TRANSFER_MODE:  { return handleRemoveTransferMode(simPacket, address, port); }
+			case DEFAULT_MODE:                    { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
+			case CORRUPT_OPERATION_MODE:          { return handleCorruptOperationMode(simPacket, address, port); }
+			case CORRUPT_BLOCK_NUM_MODE:          { return handleCorruptBlockNumMode(simPacket, address, port); }
+			case REMOVE_BLOCK_NUM_MODE:           { return handleRemoveBlockNumMode(simPacket, address, port); }
+			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { return handleCorruptClientTransferIDMode(simPacket, address, port); }
+			case CORRUPT_SERVER_TRANSFER_ID_MODE: { return handleCorruptServerTransferIDMode(simPacket, address, port); }
+			case APPEND_PACKET_MODE:              { return handleAppendPacketMode(simPacket, address, port); }
+			case SHRINK_PACKET_MODE:              { return handleShrinkPacketMode(simPacket, address, port); }
+			case CORRUPT_FILENAME_MODE:           { return handleCorruptFilenameMode(simPacket, address, port); }
+			case CORRUPT_TRANSFER_MODE:           { return handleCorruptTransferMode(simPacket, address, port); }
+			case CORRUPT_FILENAME_DELIMITER_MODE: { return handleCorruptFilenameDelimiterMode(simPacket, address, port); }
+			case CORRUPT_TRANSFER_DELIMITER_MODE: { return handleCorruptTransferDelimiterMode(simPacket, address, port); }
+			case REMOVE_FILENAME_MODE:            { return handleRemoveFilenameMode(simPacket, address, port); }
+			case REMOVE_TRANSFER_MODE:            { return handleRemoveTransferMode(simPacket, address, port); }
 			case REMOVE_FILENAME_DELIMITER_MODE:  { return handleRemoveFilenameDelimiterMode(simPacket, address, port); }
 			case REMOVE_TRANSFER_DELIMITER_MODE:  { return handleRemoveTransferDelimiterMode(simPacket, address, port); }
-			case CORRUPT_DATA_MODE:  { return handleCorruptDataMode(simPacket, address, port); }
-			case REMOVE_DATA_MODE:  { return handleRemoveDataMode(simPacket, address, port); }
+			case CORRUPT_DATA_MODE:               { return handleCorruptDataMode(simPacket, address, port); }
+			case REMOVE_DATA_MODE:                { return handleRemoveDataMode(simPacket, address, port); }
 			default: return null;
 		}
 	}
