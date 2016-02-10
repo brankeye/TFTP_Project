@@ -2,7 +2,6 @@ package Main;
 
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
 import java.util.Scanner;
 
 import General.Config;
@@ -84,6 +83,7 @@ public class Server {
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
 			System.out.println("File name: " + file.getName());
 			Operation requestOpcode = PacketParser.getOpcode(data);
+			
 			if (!file.exists()) {
 				if (requestOpcode == Operation.WRQ) {
 					try {
@@ -138,6 +138,15 @@ public class Server {
 			} else { // Operation.WRQ
 				boolean done = false;
 				int blockNumber = 1;
+				FileOutputStream out = null;
+				
+				try {
+					out = new FileOutputStream(file, false);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
 				while(!done) {
 					byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
 					DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
@@ -158,14 +167,19 @@ public class Server {
 					byte[] fileData = DataPacketParser.getData(clientResponse);
 	
 					// will move to somewhere else later
-					FileOutputStream out;
+					
 					try {
-						out = new FileOutputStream(file, true);
 						out.write(fileData, 0, datagramPacket.getLength() - 4);
-						out.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+				}
+				
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
 				}
 				
 				// send final ACK
