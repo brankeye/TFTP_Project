@@ -9,4 +9,5 @@ public class Config {
 	public static int          SERVER_PORT       = 69;
 	public static String       SERVER_ADDRESS    = "127.0.0.1";
 	public static int          MAX_BYTE_ARR_SIZE = 516;
+	public static int          MAX_PAYLOAD_SIZE  = 512;
 }

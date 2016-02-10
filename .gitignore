@@ -12,5 +12,5 @@
 hs_err_pid*
 /bin/
 /Diagrams/
-/src/Main/ClientStorage
-/src/Main/ServerStorage
+/src/Main/ClientStorage/
+/src/Main/ServerStorage/

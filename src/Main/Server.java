@@ -2,12 +2,10 @@ package Main;
 
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
 import java.util.Scanner;
 
 import General.Config;
 import General.NetworkConnector;
-import General.PacketReader;
 import NetworkTypes.Operation;
 import PacketParsers.AckPacketParser;
 import PacketParsers.DataPacketParser;
@@ -21,7 +19,6 @@ the appropriate acknowledgment to the client that requested the connection.
 public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
 	private NetworkConnector networkConnector;
-	private PacketReader     packetReader;
 	private ShutdownHandler  shutdownHandler;
 	
 	final static String RELPATH = "src/Main/ServerStorage/";
@@ -29,7 +26,6 @@ public class Server {
 	// may or may not need this, will look further into this
 	public Server() {
 		networkConnector = new NetworkConnector(Config.SERVER_PORT, true);
-		packetReader     = new PacketReader("Server");
 		shutdownHandler  = new ShutdownHandler();
 		
 	}
@@ -49,13 +45,16 @@ public class Server {
 			
 			// when the isValid function evaluates an empty/incorrect data array, it prints out Invalid Data: Opcode should be 1 or 2
 			// should update the error code printouts to be more accurate/verbose
+
 			if(RequestPacketParser.isValid(data, datagramPacket.getLength())) {
-				System.out.println("Packet Received!");
 				System.out.println("Starting new thread");
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
-			} else {} // error?
+			} else {
+				// TODO: put error handling code here for invalid packets
+			}
+			
 		}
 		
 		// Assuming the control flow of the threads doesn't simply end if the main thread does? Seems so.
@@ -79,13 +78,16 @@ public class Server {
 		@Override
 		public void run() {
 			// read the packet
-			packetReader.readReceivePacket(datagramPacket);
 			byte[] data = datagramPacket.getData();
+			byte[] dataBuffer = new byte[Config.MAX_PAYLOAD_SIZE];
+			byte[] packetBuffer;
 			
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
 			System.out.println("File name: " + file.getName());
-			Operation requestOpcode = PacketParser.getOpcode(data,datagramPacket.getLength());
+
+			Operation requestOpcode = PacketParser.getOpcode(data, datagramPacket.getLength());
+			
 			if (!file.exists()) {
 				if (requestOpcode == Operation.WRQ) {
 					try {
@@ -99,71 +101,115 @@ public class Server {
 				}
 			}
 
+			
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
 			Operation opcode = PacketParser.getOpcode(data,datagramPacket.getLength());
 			if(opcode == Operation.RRQ) {
-				int blockNumber = 1;
-				System.out.println("Block Number: " + blockNumber);
-				boolean done = false;
+				System.out.println("READ REQUEST");
 				
+				int     blockNumber = 1;
+				boolean done        = false;
+				int     numBytes    = 0;
+				FileInputStream in  = null;
+				
+				try {
+					in = new FileInputStream(file);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+
 				while(!done) {
-					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { done = true; }
-					// send the data in 516 byte chunks
+
 					try {
-						FileInputStream in = new FileInputStream(file);
-						data = new byte[Config.MAX_BYTE_ARR_SIZE - 4];
-						int n;
-						while ((n = in.read(data)) != -1) {
-							byte[] serverRes = DataPacketParser.getByteArray(blockNumber++, data);
-							DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
-	                                                                       datagramPacket.getAddress(), datagramPacket.getPort());
-							threadedNetworkConnector.send(sendPacket);
-						}
-						in.close();
+						numBytes = in.read(dataBuffer, 0, Config.MAX_PAYLOAD_SIZE);
 					} catch (IOException e) {
 						e.printStackTrace();
+						System.exit(1);
 					}
-					System.out.println("Sending data");
 					
-					datagramPacket = threadedNetworkConnector.receive();
-					packetReader.readReceivePacket(datagramPacket);
+					if (numBytes < 512) {
+						done = true;
+						if (numBytes < 0) {
+							numBytes = 0;
+						}
+					}
+					
+					// send packet
+					packetBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
+					DatagramPacket packet = new DatagramPacket(packetBuffer, numBytes + 4, datagramPacket.getAddress(), datagramPacket.getPort());
+
+					threadedNetworkConnector.send(packet);
+					
+					packet = threadedNetworkConnector.receive();
+				
 				}
+				
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
 			} else { // Operation.WRQ
 				boolean done = false;
-				int blockNumber = 0;
+				int blockNumber = 1;
+				FileOutputStream out = null;
+				
+				try {
+					out = new FileOutputStream(file, false);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
 				while(!done) {
 					byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
 					DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
 							                                       datagramPacket.getAddress(), datagramPacket.getPort());
-					packetReader.readSendPacket(sendPacket);
 					threadedNetworkConnector.send(sendPacket);
 					
 					datagramPacket = threadedNetworkConnector.receive();
-					packetReader.readReceivePacket(datagramPacket);
 					
-					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { done = true; }
+					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { 
+						done = true;
+					}
 					
 					byte[] clientResponse = datagramPacket.getData();
 					blockNumber = DataPacketParser.getBlockNumber(clientResponse);
 					System.out.println("Block Number: " + blockNumber);
 					
-					System.out.println("Data received");
-					
 					// data to write to file
 					byte[] fileData = DataPacketParser.getData(clientResponse);
 	
 					// will move to somewhere else later
-					FileOutputStream out;
+					
 					try {
-						out = new FileOutputStream(file,true);
-						out.write(fileData, 0, fileData.length);
-						out.close();
+						out.write(fileData, 0, datagramPacket.getLength() - 4);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
+				
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				
+				// send final ACK
+				byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
+				DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
+						                                       datagramPacket.getAddress(), datagramPacket.getPort());
+				
+				threadedNetworkConnector.send(sendPacket);
+				
 			}
+			
+		System.out.println("Thead Exiting");
 		}
 	}
 	

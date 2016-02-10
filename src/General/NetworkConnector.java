@@ -12,6 +12,7 @@ public class NetworkConnector {
 	
 	private DatagramSocket socket;
 	private boolean        tempSendSocket; // if true, the sending socket will be closed after
+	private PacketReader   packetReader = new PacketReader("");;
 	
 	public NetworkConnector() {
 		initializeSocket();
@@ -28,13 +29,14 @@ public class NetworkConnector {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		try {
-			System.out.println("Waiting to receive a packet...");
+			System.out.print("\nWaiting to receive a packet... ");
 			socket.receive(receivePacket);
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely ");
 			System.out.println("Receive Socket Timed Out.\n" + e);
 		}
 		
+		packetReader.readReceivePacket(receivePacket);
 		return receivePacket;
 	}
 	
@@ -52,10 +54,13 @@ public class NetworkConnector {
 			
 		} catch (SocketException e) {
 			e.printStackTrace();
+			System.exit(1);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
+
+		packetReader.readSendPacket(sendPacket);
 	}
 	
 	public void close() {
