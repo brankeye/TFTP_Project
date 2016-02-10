@@ -218,7 +218,7 @@ public class ErrorSimulator {
 		int value    = -1;
 		
 		while(!isValid) {
-			System.out.println("Please select a simulation mode:");
+			System.out.println("Please select a simulation mode (0 for default):");
 			input = scanner.nextLine();
 		
 			// assume input is valid, if not valid, loop again
