@@ -10,4 +10,5 @@ public class Config {
 	public static String       SERVER_ADDRESS    = "127.0.0.1";
 	public static int          MAX_BYTE_ARR_SIZE = 516;
 	public static int          MAX_PAYLOAD_SIZE  = 512;
+	public static int          MAX_PRINT_SIZE    = 32;
 }
