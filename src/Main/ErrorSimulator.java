@@ -33,6 +33,8 @@ public class ErrorSimulator {
 	
 	InetAddress clientAddress;
 	int         clientPort;
+	
+	private int reducedDataSize = 10;	//how much data to be left after removing data from packet
 
 	//create multiple network connectors for client and server
 	public ErrorSimulator() {
@@ -391,12 +393,32 @@ public class ErrorSimulator {
 	
 	// 14
 	private DatagramPacket handleRemoveFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		for(int i = 1; i < data.length; i++){ //make sure its not the opcode 
+			if(data[i] == 0){		
+				data[i] = 17; //change delimiter to known value of 17
+				break;
+				}
+			}
+		return new DatagramPacket(data, data.length, address, port);
+		
 	}
 	
 	// 15
 	private DatagramPacket handleRemoveTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		out:
+		for(int i = 1; i < data.length; i++){
+			if(data[i] == 0){
+				for(int j = i+1; j < data.length; j++){	//start after filename delimiter
+					if(data[j] == 0){
+						data[j] = 17;	//change delimiter to known value of 17
+						break out;
+					}
+				}
+			}
+		}
+		return new DatagramPacket(data, data.length, address, port);
 	}
 	
 	// 16
@@ -406,7 +428,12 @@ public class ErrorSimulator {
 	
 	// 17
 	private DatagramPacket handleRemoveDataMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		byte[] reducedData = new byte[2];
+		for(int i = 0; i < 2; i ++ ){
+			reducedData[i] = data[i];
+		}
+		return new DatagramPacket(reducedData, reducedData.length, address, port);
 	}
 	
 		//convert bytes to string to display --- for future use
