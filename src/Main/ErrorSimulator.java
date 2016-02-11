@@ -366,7 +366,7 @@ public class ErrorSimulator {
 		return new DatagramPacket(data, length, address, port);
 	}
 	
-	// 9
+	// 9 Reverses part of the transfer mode to corrupt it
 	private DatagramPacket handleCorruptTransferMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		for(int i = 1; i < data.length; i++){ 
@@ -384,7 +384,7 @@ public class ErrorSimulator {
 		
 	
 	
-	// 10
+	// 10 Changes filename delimiter to 17 instead of 0
 	private DatagramPacket handleCorruptFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		for(int i = 1; i < data.length; i++){ //make sure its not the opcode 
@@ -396,7 +396,7 @@ public class ErrorSimulator {
 		return new DatagramPacket(data, data.length, address, port);
 	}
 	
-	// 11
+	// 11 Changes transfer delimiter to 17 instead of 0
 	private DatagramPacket handleCorruptTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		out:
@@ -413,17 +413,34 @@ public class ErrorSimulator {
 		return new DatagramPacket(data, data.length, address, port);
 	}
 	
-	// 12
+	// 12 //removes the filename of the bytes
 	private DatagramPacket handleRemoveFilenameMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		String filename = RequestPacketParser.getFilename(data);
+		String temp = PacketParser.getString(data);
+		temp = temp.replace(filename, "");
+		byte[] b = temp.getBytes();
+		return new DatagramPacket(b, b.length, address, port);
 	}
 	
 	// 13
 	private DatagramPacket handleRemoveTransferMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
-	}
+		byte[] data = simPacket.getData();
+		int newSize = 1;
+		for(int i = 1; i < data.length; i++){
+			newSize++;
+			if(data[i] == 0){
+				break;
+			}
+		}
+		byte[] newByte = new byte[newSize+1];
+		for(int i = 0; i < newByte.length - 1; i++){
+			newByte[i] = data[i];
+		}
+		return new DatagramPacket(newByte, newByte.length, address, port);
+		}
 	
-	// 14
+	// 14 removes filename delimiter 
 	private DatagramPacket handleRemoveFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		byte[] modded = new byte[data.length - 1];
@@ -440,7 +457,7 @@ public class ErrorSimulator {
 		return new DatagramPacket(modded, modded.length, address, port);
 	}
 	
-	// 15
+	// 15 removes transfer delimiter
 	private DatagramPacket handleRemoveTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		byte[] modded = new byte[data.length - 1];
@@ -450,12 +467,16 @@ public class ErrorSimulator {
 		return new DatagramPacket(modded, modded.length, address, port);
 	}
 	
-	// 16
+	// 16 Corrupts data by scrambling it
 	private DatagramPacket handleCorruptDataMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		for(int i = 4; i < data.length /2; i++){
+			data[i] = data[i-1];
+		}
+		return new DatagramPacket(data, data.length, address, port);
 	}
 	
-	// 17
+	// 17 Removes all data from the packet, left with the opcode
 	private DatagramPacket handleRemoveDataMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		byte[] reducedData = new byte[2];
