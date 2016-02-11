@@ -1,5 +1,4 @@
 package Main;
-import java.io.ByteArrayOutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -11,6 +10,7 @@ import General.NetworkConnector;
 import General.PacketReader;
 import General.SimulationMode;
 import NetworkTypes.Operation;
+import NetworkTypes.TransferMode;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -368,17 +368,49 @@ public class ErrorSimulator {
 	
 	// 9
 	private DatagramPacket handleCorruptTransferMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		for(int i = 1; i < data.length; i++){ 
+			if(data[i] == 0){
+			    int k = 2;
+				for(int j = i+1; j < data.length; j++){
+					data[j] = data[data.length - k];
+					k++;
+				}
+				break;
+			}
+		}
+		return new DatagramPacket(data, data.length, address, port);
 	}
+		
+	
 	
 	// 10
 	private DatagramPacket handleCorruptFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		for(int i = 1; i < data.length; i++){ //make sure its not the opcode 
+			if(data[i] == 0){		
+				data[i] = 17; //change delimiter to known value of 17
+				break;
+				}
+			}
+		return new DatagramPacket(data, data.length, address, port);
 	}
 	
 	// 11
 	private DatagramPacket handleCorruptTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
-		return null;
+		byte[] data = simPacket.getData();
+		out:
+		for(int i = 1; i < data.length; i++){
+			if(data[i] == 0){
+				for(int j = i+1; j < data.length; j++){	//start after filename delimiter
+					if(data[j] == 0){
+						data[j] = 17;	//change delimiter to known value of 17
+						break out;
+					}
+				}
+			}
+		}
+		return new DatagramPacket(data, data.length, address, port);
 	}
 	
 	// 12
@@ -394,31 +426,28 @@ public class ErrorSimulator {
 	// 14
 	private DatagramPacket handleRemoveFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
-		for(int i = 1; i < data.length; i++){ //make sure its not the opcode 
-			if(data[i] == 0){		
-				data[i] = 17; //change delimiter to known value of 17
-				break;
-				}
-			}
-		return new DatagramPacket(data, data.length, address, port);
-		
+		byte[] modded = new byte[data.length - 1];
+		modded[0] = data[0];
+		modded[1] = data[1];
+		int i = 1; 
+		int j = 1;
+		while(i < modded.length){
+		    if(data[i] == 0)i++;
+		    modded[j] = data[i];
+		    i++;
+		    j++;
+		  }
+		return new DatagramPacket(modded, modded.length, address, port);
 	}
 	
 	// 15
 	private DatagramPacket handleRemoveTransferDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
-		out:
-		for(int i = 1; i < data.length; i++){
-			if(data[i] == 0){
-				for(int j = i+1; j < data.length; j++){	//start after filename delimiter
-					if(data[j] == 0){
-						data[j] = 17;	//change delimiter to known value of 17
-						break out;
-					}
-				}
-			}
+		byte[] modded = new byte[data.length - 1];
+		for(int i = 0; i < modded.length; i++){
+			modded[i] = data[i];
 		}
-		return new DatagramPacket(data, data.length, address, port);
+		return new DatagramPacket(modded, modded.length, address, port);
 	}
 	
 	// 16
