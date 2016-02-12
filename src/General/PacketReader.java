@@ -41,11 +41,12 @@ public class PacketReader {
  	    String str  = "";
  	    
  	    switch(PacketParser.getOpcode(data)) {
- 	    	case RRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case WRQ:  str = RequestPacketParser.getString(data); break;
- 	    	case DATA: str = DataPacketParser.getString(data); break;
- 	    	case ACK:  str = AckPacketParser.getString(data); break;
- 	    	default:   break;
+			case RRQ:     str = RequestPacketParser.getString(data); break;
+			case WRQ:     str = RequestPacketParser.getString(data); break;
+			case DATA:    str = DataPacketParser.getString(data); break;
+			case ACK:     str = AckPacketParser.getString(data); break;
+			case INVALID: str = PacketParser.getString(data); break;
+	    	default:      str ="ERROR"; break;
  	    }
 
  	    
@@ -60,13 +61,13 @@ public class PacketReader {
  	    if (length > Config.MAX_PRINT_SIZE) {
 	 	    while (i < Config.MAX_PRINT_SIZE) {
 	 	    	System.out.print(" ");
-	 	    	System.out.print(data[i++]);
+	 	    	System.out.print(data[i++] & 0xff);
 		    }
 	 	    System.out.println("...");
  	    } else {
  	    	while (i < length) {
  	    		System.out.print(" ");
-	 	    	System.out.print(data[i++]);
+	 	    	System.out.print(data[i++] & 0xff);
 	 	    	
  	    	}
  	    }
