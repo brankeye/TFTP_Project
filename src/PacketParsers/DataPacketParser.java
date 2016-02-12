@@ -44,8 +44,15 @@ public class DataPacketParser extends PacketParser {
 	}
 
 	// TODO: implement this in the future iterations
-	public static boolean isValid(byte[] data) {
-		return false;
+	public static boolean isValid(byte[] data, int expectedBlockNumber) {
+		
+		int actualBlockNumber = ((data[2] & 0xff) << 8) + (data[3] & 0xff);
+		
+		if (data[0] != 0) return false;
+		if (data[1] != Operation.DATA.ordinal()) return false;
+		if (actualBlockNumber != expectedBlockNumber) return false;
+		
+		return true;
 	}
 
 	/**

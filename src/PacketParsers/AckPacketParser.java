@@ -1,5 +1,9 @@
 package PacketParsers;
 
+import java.io.UnsupportedEncodingException;
+
+import NetworkTypes.Operation;
+
 /**
  * Contains static methods used for parsing and creating acknowledgement UDP DatagramPackets for
  * use in a TFTP application.
@@ -25,15 +29,22 @@ public class AckPacketParser extends PacketParser {
 	}
 
 	// TODO: Implement in future iterations
-	public static boolean isValid(byte[] data) {
-		return false;
+	public static boolean isValid(byte[] data, int expectedBlockNumber) {
+		
+		int actualBlockNumber = ((data[2] & 0xff) << 8) + (data[3] & 0xff);
+		
+		if (data[0] != 0) return false;
+		if (data[1] != Operation.ACK.ordinal()) return false;
+		if (actualBlockNumber != expectedBlockNumber) return false;
+		
+		return true;
 	}
 
 	/**
-	 * Parses the specified byte array and returns the interger block number which is 2 bytes, 2^16.
+	 * Parses the specified byte array and returns the integer block number which is 2 bytes, 2^16.
 	 * 
 	 * @param data
-	 *            byte array from an acknowledgement datagrampacket
+	 *            byte array from an acknowledgement datagramPacket
 	 * @return the number of the block of data
 	 */
 	public static int getBlockNumber(byte[] data) {
