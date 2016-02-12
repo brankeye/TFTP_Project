@@ -81,6 +81,7 @@ public class Server {
 			datagramPacket           = receivedPacket;
 			threadedNetworkConnector = new NetworkConnector();
 			fileServer               = new FileServer(threadedNetworkConnector);
+			fileServer.setExpectedHost(datagramPacket.getAddress(), datagramPacket.getPort());
 		}
 
 		@Override
@@ -110,8 +111,6 @@ public class Server {
 					System.exit(1);
 				}
 			}
-			
-			// TODO: add error-checking for request packet
 
 			
 			// response for the first request // for now, the only things we

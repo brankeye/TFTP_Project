@@ -97,6 +97,7 @@ public class Client {
 				
 		// wait for ACK packet and validate packet
 		packet = networkConnector.receive();
+		fileServer.setExpectedHost(packet.getAddress(), packet.getPort());
 		// add error checking on received ACK packet
 		
 		if(AckPacketParser.isValid(packet.getData(), 0)) {
