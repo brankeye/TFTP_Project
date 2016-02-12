@@ -42,12 +42,12 @@ public class PacketReader {
  	    String str  = "";
  	    
  	    switch(PacketParser.getOpcode(data,length)) {
-			case RRQ:     str = RequestPacketParser.getString(data, length); break;
-			case WRQ:     str = RequestPacketParser.getString(data, length); break;
-			case DATA:    str = DataPacketParser.getString(data, length); break;
-			case ACK:     str = AckPacketParser.getString(data, length); break;
-			case INVALID: str = PacketParser.getString(data, length); break;
-	    	default:      str ="ERROR"; break;
+			case RRQ:   str = RequestPacketParser.getString(data, length); break;
+			case WRQ:   str = RequestPacketParser.getString(data, length); break;
+			case DATA:  str = DataPacketParser.getString(data, length); break;
+			case ACK:   str = AckPacketParser.getString(data, length); break;
+			case ERROR: str = ErrorPacketParser.getString(data, length); break;
+			default:    str = PacketParser.getString(data, length);
  	    }
 
  	    

@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import NetworkTypes.ErrorCode;
 import NetworkTypes.Operation;
 
-public class ErrorPacketParser {
+public class ErrorPacketParser extends PacketParser {
 
 	public static byte[] getByteArray(ErrorCode e, String errmsg) {
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
