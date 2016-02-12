@@ -7,8 +7,10 @@ import java.util.Scanner;
 import General.Config;
 import General.FileServer;
 import General.NetworkConnector;
+import NetworkTypes.ErrorCode;
 import NetworkTypes.Operation;
 import PacketParsers.AckPacketParser;
+import PacketParsers.ErrorPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -51,9 +53,11 @@ public class Server {
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
-			} else if(PacketParser.getOpcode(datagramPacket.getData(), datagramPacket.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
-				return;
+			} else {
+				System.out.println("Received invalid REQUEST packet. Transfer stopped.");
+				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
+				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, datagramPacket.getAddress(), datagramPacket.getPort());
+				networkConnector.send(errPacket);
 			}
 			
 		}
