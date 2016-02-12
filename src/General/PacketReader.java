@@ -40,35 +40,35 @@ public class PacketReader {
 
  	    byte[] data = packet.getData();
  	    String str  = "";
-
+ 	    
  	    switch(PacketParser.getOpcode(data,length)) {
- 	    	case RRQ:  str = RequestPacketParser.getString(data, length); break;
- 	    	case WRQ:  str = RequestPacketParser.getString(data, length); break;
- 	    	case DATA: str = DataPacketParser.getString(data, length); break;
- 	    	case ACK:  str = AckPacketParser.getString(data, length); break;
-
- 	    	default:   break;
+			case RRQ:     str = RequestPacketParser.getString(data, length); break;
+			case WRQ:     str = RequestPacketParser.getString(data, length); break;
+			case DATA:    str = DataPacketParser.getString(data, length); break;
+			case ACK:     str = AckPacketParser.getString(data, length); break;
+			case INVALID: str = PacketParser.getString(data, length); break;
+	    	default:      str ="ERROR"; break;
  	    }
 
  	    
- 	    if (length > 32) {
- 	 	    System.out.print("String: '" + str.substring(0,  32).replace("\r\n",  " ") + "...'\n");
+ 	    if (length > Config.MAX_PRINT_SIZE) {
+ 	 	    System.out.print("String: '" + str.substring(0,  Config.MAX_PRINT_SIZE).replace("\r\n",  " ") + "...'\n");
  	    } else {
  	    	System.out.print("String: '" + str.substring(0, length) + "'\n");
  	    }
  	   
  	    int i = 0;
  	    System.out.print("Bytes:");
- 	    if (length > 32) {
-	 	    while (i < 32) {
+ 	    if (length > Config.MAX_PRINT_SIZE) {
+	 	    while (i < Config.MAX_PRINT_SIZE) {
 	 	    	System.out.print(" ");
-	 	    	System.out.print(data[i++]);
+	 	    	System.out.print(data[i++] & 0xff);
 		    }
 	 	    System.out.println("...");
  	    } else {
  	    	while (i < length) {
  	    		System.out.print(" ");
-	 	    	System.out.print(data[i++]);
+	 	    	System.out.print(data[i++] & 0xff);
 	 	    	
  	    	}
  	    }

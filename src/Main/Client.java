@@ -5,8 +5,6 @@ import java.net.*;
 import java.util.*;
 import General.*;
 import NetworkTypes.Operation;
-import PacketParsers.AckPacketParser;
-import PacketParsers.DataPacketParser;
 import PacketParsers.RequestPacketParser;
 
 public class Client {
@@ -18,8 +16,10 @@ public class Client {
 	private int destPort;
 
 	private static Scanner scanner;
+
 	InputStream inputStream;
 	OutputStream outputStream;
+	FileServer fileServer;
 
 	final static int NOT_ZERO = 1;
 	final static int SERVER_PORT = 69;
@@ -31,6 +31,7 @@ public class Client {
 		scanner = new Scanner(System.in);
 
 		networkConnector = new NetworkConnector();
+		fileServer = new FileServer(networkConnector);
 
 		try {
 			destAddress = InetAddress.getByName(Config.ERR_SIM_ADDRESS);
@@ -38,8 +39,7 @@ public class Client {
 			e.printStackTrace();
 		}
 		this.destPort = Config.ERR_SIM_PORT;
-		//this.destPort = Config.SERVER_PORT;
-
+		// this.destPort = Config.SERVER_PORT;
 
 	}
 
@@ -47,23 +47,12 @@ public class Client {
 	private int read(String filename) {
 
 		DatagramPacket packet = null;
-		int blockNumber   = 1;
-		byte[] rrqBuffer  = RequestPacketParser.getByteArray(Operation.RRQ, filename);
-		byte[] ackBuffer  = new byte[4];
-		boolean done      = false;
-		
-		
+		byte[] rrqBuffer = RequestPacketParser.getByteArray(Operation.RRQ, filename);
+
 		// send RRQ packet
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
-		
-		// wait for ACK packet and validate
-		packet = networkConnector.receive();
-		if (AckPacketParser.getOpcode(packet.getData(),packet.getLength()) != Operation.DATA) {
-			return 0;
-		}
 
-		// open local file for writing
 		try {
 			outputStream = new FileOutputStream(new File(RELPATH + filename));
 		} catch (FileNotFoundException e) {
@@ -71,40 +60,8 @@ public class Client {
 			return 1;
 		}
 
-		// loop while receiving data packets
-		while (! done) {
-			
-			if (packet.getLength() > 3) {
-				try {
-					outputStream.write(DataPacketParser.getData(packet.getData()), 0, packet.getLength() - 4);
-	 			} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
-				}
-
-				if (packet.getLength() < 516) {
-					done = true;
-				}
-
-				// send ACK packet
-				ackBuffer = AckPacketParser.getByteArray(blockNumber);
-				packet = new DatagramPacket(ackBuffer, ackBuffer.length, destAddress, destPort);
-				networkConnector.send(packet);
-				
-				if (!done) {
-					// wait for DATA packet and validate
-					packet = networkConnector.receive();
-					if (AckPacketParser.getOpcode(packet.getData(),packet.getLength()) != Operation.DATA) {
-						done = true;
-					}
-				}
-
-			} else {
-				done = true;
-			}
-
-			blockNumber += 1;
-		}
+		// use fileServer to receive DATA/send ACKs
+		fileServer.receive(outputStream, destAddress, destPort);
 
 		try {
 			outputStream.close();
@@ -117,22 +74,17 @@ public class Client {
 	}
 
 	// reads a local file and writes it to server
-	private int write(String filename) {
+	private boolean write(String filename) {
 
 		DatagramPacket packet = null;
-		byte[] dataBuffer = new byte[512];
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
-		byte[] packetBuffer;
-		int blockNumber   = 1;
-		boolean done      = false;
-		int numBytes      = NOT_ZERO;
 		
 		// open local file for reading
 		try {
 			inputStream = new FileInputStream(new File(RELPATH + filename));
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
-			return 1;
+			return false;
 		}
 
 		// send WRQ packet
@@ -141,48 +93,20 @@ public class Client {
 				
 		// wait for ACK packet and validate packet
 		packet = networkConnector.receive();
-		if (AckPacketParser.getOpcode(packet.getData(),packet.getLength()) != Operation.ACK) {
-			return 1;
-		}
-
-		// read local file in blocks of 512 bytes, send DATA packet
-		while (!done) {
-			try {
-				numBytes = inputStream.read(dataBuffer, 0, 512);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			if (numBytes < 512) {
-				done = true;
-				if (numBytes < 0) {
-					numBytes = 0;
-				}
-			}
-
-			// send packet
-			packetBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
-			packet = new DatagramPacket(packetBuffer, numBytes + 4, destAddress, Config.ERR_SIM_PORT);
-
-			networkConnector.send(packet);
-			
-			packet = networkConnector.receive();
-			if (AckPacketParser.getOpcode(packet.getData(),packet.getLength()) != Operation.ACK) {
-				return 1;
-			}
-
-			blockNumber += 1;
-		}
-
+		// TODO: add error checking on received ACK packet
+	
+		// use fileServer to send DATA/receive ACKs
+		fileServer.send(inputStream, destAddress, destPort);
+		
+		// close input stream
 		try {
 			inputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-
-		return 0;
+		
+		return false;
 	}
 
 	public static void main(String[] args) {

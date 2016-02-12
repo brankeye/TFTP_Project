@@ -5,10 +5,10 @@ import java.net.*;
 import java.util.Scanner;
 
 import General.Config;
+import General.FileServer;
 import General.NetworkConnector;
 import NetworkTypes.Operation;
 import PacketParsers.AckPacketParser;
-import PacketParsers.DataPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -67,20 +67,22 @@ public class Server {
 	}
 
 	private class Splitter implements Runnable {
-		DatagramPacket datagramPacket;
+		DatagramPacket   datagramPacket;
 		NetworkConnector threadedNetworkConnector;
-
+		FileServer       fileServer;
 		public Splitter(DatagramPacket receivedPacket) {
-			datagramPacket = receivedPacket;
+			datagramPacket           = receivedPacket;
 			threadedNetworkConnector = new NetworkConnector();
+			fileServer               = new FileServer(threadedNetworkConnector);
 		}
 
 		@Override
 		public void run() {
 			// read the packet
 			byte[] data = datagramPacket.getData();
-			byte[] dataBuffer = new byte[Config.MAX_PAYLOAD_SIZE];
-			byte[] packetBuffer;
+
+			InetAddress destAddress = datagramPacket.getAddress();
+			int destPort            = datagramPacket.getPort();
 			
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
@@ -100,113 +102,57 @@ public class Server {
 					System.exit(1);
 				}
 			}
+			
+			// TODO: add error-checking for request packet
 
 			
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
 			Operation opcode = PacketParser.getOpcode(data,datagramPacket.getLength());
 			if(opcode == Operation.RRQ) {
-				System.out.println("READ REQUEST");
-				
-				int     blockNumber = 1;
-				boolean done        = false;
-				int     numBytes    = 0;
-				FileInputStream in  = null;
+
+				FileInputStream inputStream  = null;
 				
 				try {
-					in = new FileInputStream(file);
+					inputStream = new FileInputStream(file);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 					System.exit(1);
 				}
-
-				while(!done) {
-
-					try {
-						numBytes = in.read(dataBuffer, 0, Config.MAX_PAYLOAD_SIZE);
-					} catch (IOException e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
-					
-					if (numBytes < 512) {
-						done = true;
-						if (numBytes < 0) {
-							numBytes = 0;
-						}
-					}
-					
-					// send packet
-					packetBuffer = DataPacketParser.getByteArray(blockNumber, dataBuffer);
-					DatagramPacket packet = new DatagramPacket(packetBuffer, numBytes + 4, datagramPacket.getAddress(), datagramPacket.getPort());
-
-					threadedNetworkConnector.send(packet);
-					
-					packet = threadedNetworkConnector.receive();
 				
-				}
+				fileServer.send(inputStream, destAddress, destPort);
 				
 				try {
-					in.close();
+					inputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
 				}
 				
 			} else { // Operation.WRQ
-				boolean done = false;
-				int blockNumber = 1;
-				FileOutputStream out = null;
+				
+				FileOutputStream outputStream = null;
 				
 				try {
-					out = new FileOutputStream(file, false);
+					outputStream = new FileOutputStream(file, false);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 					System.exit(1);
 				}
 				
-				while(!done) {
-					byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
-					DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
-							                                       datagramPacket.getAddress(), datagramPacket.getPort());
-					threadedNetworkConnector.send(sendPacket);
-					
-					datagramPacket = threadedNetworkConnector.receive();
-					
-					if(datagramPacket.getLength() < Config.MAX_BYTE_ARR_SIZE) { 
-						done = true;
-					}
-					
-					byte[] clientResponse = datagramPacket.getData();
-					blockNumber = DataPacketParser.getBlockNumber(clientResponse);
-					System.out.println("Block Number: " + blockNumber);
-					
-					// data to write to file
-					byte[] fileData = DataPacketParser.getData(clientResponse);
-	
-					// will move to somewhere else later
-					
-					try {
-						out.write(fileData, 0, datagramPacket.getLength() - 4);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
+				byte[] serverRes = AckPacketParser.getByteArray(1);
+				DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
+						                                       datagramPacket.getAddress(), datagramPacket.getPort());
+				threadedNetworkConnector.send(sendPacket);
 				
+				fileServer.receive(outputStream, destAddress, destPort);
+
 				try {
-					out.close();
+					outputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				
-				// send final ACK
-				byte[] serverRes = AckPacketParser.getByteArray(blockNumber);
-				DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
-						                                       datagramPacket.getAddress(), datagramPacket.getPort());
-				
-				threadedNetworkConnector.send(sendPacket);
-				
 			}
 			
 		System.out.println("Thead Exiting");
