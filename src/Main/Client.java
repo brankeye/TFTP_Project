@@ -99,12 +99,12 @@ public class Client {
 		packet = networkConnector.receive();
 		// add error checking on received ACK packet
 		
-		if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-			System.out.println("Received ERROR packet. Transfer stopped.");
-			return false;
-		} else if(AckPacketParser.isValid(packet.getData(), 0)) {
+		if(AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
 			fileServer.send(inputStream, destAddress, destPort);
+		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+			System.out.println("Received ERROR packet. Transfer stopped.");
+			return false;
 		} else {
 			System.out.println("Received invalid ACK packet. Transfer stopped.");
 			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");

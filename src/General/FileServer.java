@@ -63,14 +63,14 @@ public class FileServer {
 			// wait for ACK packet
 			packet = networkConnector.receive();
 			// add error-checking for received packet
-			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
-				return;
-			} else if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
+			if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid ACK packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
+				return;
+			} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
 				return;
 			}
 
@@ -89,22 +89,15 @@ public class FileServer {
 			// wait for DATA packet and validate
 			packet = networkConnector.receive();
 			// add error-checking for received packet
-			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
-				return;
-			} else if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
+			if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid DATA packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
 				return;
-			}
-			
-			if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
-				System.out.println("Invalid block number");
-				System.out.println(blockNumber);
-				System.out.println(AckPacketParser.getBlockNumber(packet.getData()));
-				System.exit(1);
+			} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
+				return;
 			}
 			
 			if (packet.getLength() > 3) {

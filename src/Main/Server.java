@@ -51,8 +51,9 @@ public class Server {
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
-			} else {
-				// TODO: put error handling code here for invalid packets
+			} else if(PacketParser.getOpcode(datagramPacket.getData(), datagramPacket.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
+				return;
 			}
 			
 		}
