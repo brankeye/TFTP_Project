@@ -4,7 +4,11 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import General.*;
+import NetworkTypes.ErrorCode;
 import NetworkTypes.Operation;
+import PacketParsers.AckPacketParser;
+import PacketParsers.ErrorPacketParser;
+import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
 public class Client {
@@ -93,10 +97,20 @@ public class Client {
 				
 		// wait for ACK packet and validate packet
 		packet = networkConnector.receive();
-		// TODO: add error checking on received ACK packet
-	
-		// use fileServer to send DATA/receive ACKs
-		fileServer.send(inputStream, destAddress, destPort);
+		// add error checking on received ACK packet
+		
+		if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+			System.out.println("Received ERROR packet. Transfer stopped.");
+			return false;
+		} else if(AckPacketParser.isValid(packet.getData(), 0)) {
+			// use fileServer to send DATA/receive ACKs
+			fileServer.send(inputStream, destAddress, destPort);
+		} else {
+			System.out.println("Received invalid ACK packet. Transfer stopped.");
+			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
+			DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
+			networkConnector.send(errPacket);
+		}
 		
 		// close input stream
 		try {
