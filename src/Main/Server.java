@@ -53,9 +53,11 @@ public class Server {
 				Splitter splitter = new Splitter(datagramPacket);
 				Thread t = new Thread(splitter);
 				t.start();
+			} else if(PacketParser.getOpcode(datagramPacket.getData(), datagramPacket.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
 			} else {
 				System.out.println("Received invalid REQUEST packet. Transfer stopped.");
-				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
+				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad REQUEST packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, datagramPacket.getAddress(), datagramPacket.getPort());
 				networkConnector.send(errPacket);
 			}
@@ -161,7 +163,7 @@ public class Server {
 				}
 			}
 			
-		System.out.println("Thead Exiting");
+		System.out.println("Thread Exiting");
 		}
 	}
 	

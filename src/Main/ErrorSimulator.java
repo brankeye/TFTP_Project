@@ -227,6 +227,11 @@ public class ErrorSimulator {
 	
 	// returns the modified datagrampacket
 	private DatagramPacket handleSimulationModes(DatagramPacket simPacket, InetAddress address, int port) {
+		// don't mess with the error packets
+		if(PacketParser.getOpcode(simPacket.getData(), simPacket.getLength()) == Operation.ERROR) {
+			return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port);
+		}
+		
 		switch(simMode) {
 			case DEFAULT_MODE:                    { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
 			case CORRUPT_OPERATION_MODE:          { return handleCorruptOperationMode(simPacket, address, port); }

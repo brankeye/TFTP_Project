@@ -63,15 +63,15 @@ public class FileServer {
 			// wait for ACK packet
 			packet = networkConnector.receive();
 			// add error-checking for received packet
-			if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
+			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
+				done = true;
+			} else if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid ACK packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
-				return;
-			} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
-				return;
+				done = true;
 			}
 
 			blockNumber += 1;			
@@ -89,14 +89,14 @@ public class FileServer {
 			// wait for DATA packet and validate
 			packet = networkConnector.receive();
 			// add error-checking for received packet
-			if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
+			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
+				return;
+			} else if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid DATA packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
-				return;
-			} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
 				return;
 			}
 			
@@ -107,7 +107,6 @@ public class FileServer {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				
 			} else  {
 				done = true;
 			}	
