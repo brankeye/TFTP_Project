@@ -75,10 +75,10 @@ public class DataPacketParser extends PacketParser {
 	 *            the byte array to parse
 	 * @return the parsed data in byte array form.
 	 */
-	public static byte[] getData(byte[] data) {
-		if (data.length < 4) {
+	public static byte[] getData(byte[] data, int length) {
+		if (length < 4) {
 			return new byte[] { -1 };
 		}
-		return Arrays.copyOfRange(data, 4, data.length);
+		return Arrays.copyOfRange(data, 4, length);
 	}
 }

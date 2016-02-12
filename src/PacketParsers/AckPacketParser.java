@@ -1,7 +1,5 @@
 package PacketParsers;
 
-import java.io.UnsupportedEncodingException;
-
 import NetworkTypes.Operation;
 
 /**

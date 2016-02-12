@@ -359,7 +359,7 @@ public class ErrorSimulator {
 		
 		Operation opcode = PacketParser.getOpcode(data, length);
 		if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
-			String str = RequestPacketParser.getFilename(data);
+			String str = RequestPacketParser.getFilename(data, length);
 			byte[] modded = RequestPacketParser.getByteArray(opcode, new StringBuilder(str).reverse().toString());
 			return new DatagramPacket(modded, modded.length, address, port);
 		}
@@ -418,7 +418,7 @@ public class ErrorSimulator {
 	private DatagramPacket handleRemoveFilenameMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data = simPacket.getData();
 		int length = simPacket.getLength();
-		String filename = RequestPacketParser.getFilename(data);
+		String filename = RequestPacketParser.getFilename(data, length);
 		String temp = PacketParser.getString(data, length);
 		temp = temp.replace(filename, "");
 		byte[] b = temp.getBytes();

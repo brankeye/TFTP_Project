@@ -25,7 +25,7 @@ public class PacketParser {
 	public static String getString(byte[] data, int length) {
 		StringBuffer buffer = new StringBuffer();
 		for(int i = 0 ; i < length; i++) {
-			buffer.append((char) data[i++]);
+			buffer.append((char) data[i]);
 		}
 		return buffer.toString();
 	}

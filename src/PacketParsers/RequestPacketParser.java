@@ -57,11 +57,11 @@ public class RequestPacketParser extends PacketParser {
 			// code
 			System.out.println("Invalid Data: Opcode should be 1 or 2");
 			return false;
-		} else if (getFilename(data) == "Invalid Filename") { // Check the
+		} else if (getFilename(data, length) == "Invalid Filename") { // Check the
 																// filename
 			System.out.println("Invalid Data: Invalid Filename");
 			return false;
-		} else if (getTransferMode(data) == TransferMode.INVALID) { // Check the
+		} else if (getTransferMode(data, length) == TransferMode.INVALID) { // Check the
 																	// mode
 			System.out.println("Invalid Data: Invalid Transfermode");
 			return false;
@@ -78,9 +78,9 @@ public class RequestPacketParser extends PacketParser {
 	 *            data byte array taken from a UDP DatagramPacket
 	 * @return string of the found filename, "Invalid Filename" if not found
 	 */
-	public static String getFilename(byte[] data) {
+	public static String getFilename(byte[] data, int length) {
 
-		for (int i = 2; i < data.length; i++) {
+		for (int i = 2; i < length; i++) {
 			if (data[i] == 0) { // If a 0 byte is encountered, stop.
 				if (i != 2) { // Check for 0 length filenames.
 					return new String(data, 2, i - 2);
@@ -101,21 +101,21 @@ public class RequestPacketParser extends PacketParser {
 	 * @return the transfermode found in the data, invalid if none found
 	 * @see TransferMode
 	 */
-	public static TransferMode getTransferMode(byte[] data) {
+	public static TransferMode getTransferMode(byte[] data, int length) {
 
-		int seperator = getFilename(data).getBytes().length + 3; // The location
+		int seperator = getFilename(data, length).getBytes().length + 3; // The location
 																	// of the 0
 																	// separating
 																	// the
 																	// filename
 																	// and mode
 
-		for (int i = seperator; i < data.length; i++) {
+		for (int i = seperator; i < length; i++) {
 			if (data[i] == 0) { // stop once encountering a 0 byte
 				if (i != seperator) { // if the iterator didn't progress return
 										// invalid (ie. zero length mode)
 					return TransferMode
-							.valueOf(new String(data, seperator, i - getFilename(data).getBytes().length - 3));
+							.valueOf(new String(data, seperator, i - getFilename(data, length).getBytes().length - 3));
 				}
 				break;
 			}

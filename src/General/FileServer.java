@@ -90,7 +90,7 @@ public class FileServer {
 			
 			if (packet.getLength() > 3) {
 				try {
-					outputStream.write(DataPacketParser.getData(packet.getData()), 0, packet.getLength() - 4);
+					outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
 	 			} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);

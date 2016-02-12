@@ -80,12 +80,13 @@ public class Server {
 		public void run() {
 			// read the packet
 			byte[] data = datagramPacket.getData();
+			int length = datagramPacket.getLength();
 
 			InetAddress destAddress = datagramPacket.getAddress();
 			int destPort            = datagramPacket.getPort();
 			
 			// verify the filename is good
-			File file = new File(RELPATH + RequestPacketParser.getFilename(data));
+			File file = new File(RELPATH + RequestPacketParser.getFilename(data, length));
 			System.out.println("File name: " + file.getName());
 
 			Operation requestOpcode = PacketParser.getOpcode(data, datagramPacket.getLength());
