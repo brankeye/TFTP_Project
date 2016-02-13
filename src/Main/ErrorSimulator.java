@@ -32,14 +32,17 @@ public class ErrorSimulator {
 	InetAddress clientAddress;
 	int         clientPort;
 	
-	private int reducedDataSize = 10;	//how much data to be left after removing data from packet
+	NetworkConnector badConnector;
+	
+	//private int reducedDataSize = 10;	//how much data to be left after removing data from packet
 
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
 
-		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, true);
+		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false);
 		serverConnector  = new NetworkConnector();
 		scanner          = new Scanner(System.in);
+		badConnector     = new NetworkConnector();
 
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);
@@ -140,12 +143,11 @@ public class ErrorSimulator {
 			// send packet to server
 			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
 			//serverConnector.send(sendServerPacket);
-			if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
-				NetworkConnector tempConn = new NetworkConnector();
-				tempConn.send(sendServerPacket);
-			} else {
-				serverConnector.send(sendServerPacket);
+			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+				badConnector.send(sendServerPacket);
+				badConnector.receive();
 			}
+			serverConnector.send(sendServerPacket);
 			
 			// wait for ACK from server
 			DatagramPacket dpServer = serverConnector.receive();
@@ -154,12 +156,11 @@ public class ErrorSimulator {
 			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
 			//clientConnector.send(dpClient);
 			
-			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
-				NetworkConnector tempConn = new NetworkConnector();
-				tempConn.send(dpClient);
-			} else {
-				clientConnector.send(dpClient);
+			if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
+				badConnector.send(dpClient);
+				badConnector.receive();
 			}
+			clientConnector.send(dpClient);
 			
 			if (!done) {
 				dpClient = clientConnector.receive();
@@ -191,13 +192,12 @@ public class ErrorSimulator {
 			DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
 			//clientConnector.send(responsePacket);
 			
-			if(clientKnowsServer && simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
-				NetworkConnector tempConn = new NetworkConnector();
-				tempConn.send(responsePacket);
-			} else {
-				clientConnector.send(responsePacket);
-				clientKnowsServer = true;
+			if(clientKnowsServer && simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
+				badConnector.send(responsePacket);
+				badConnector.receive();
 			}
+			clientConnector.send(responsePacket);
+			clientKnowsServer = true;
 			
 			// receive ACK from client
 			DatagramPacket dpClient = clientConnector.receive();
@@ -205,12 +205,11 @@ public class ErrorSimulator {
 			// forward ACK to server
 			dpServer = handleSimulationModes(dpClient, threadAddress, threadPort);
 			//serverConnector.send(dpServer);
-			if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
-				NetworkConnector tempConn = new NetworkConnector();
-				tempConn.send(dpServer);
-			} else {
-				serverConnector.send(dpServer);
+			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+				badConnector.send(dpServer);
+				badConnector.receive();
 			}
+			serverConnector.send(dpServer);
 		}
 
 		/*

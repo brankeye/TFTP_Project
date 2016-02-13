@@ -147,7 +147,7 @@ public class Server {
 					System.exit(1);
 				}
 				
-				byte[] serverRes = AckPacketParser.getByteArray(1);
+				byte[] serverRes = AckPacketParser.getByteArray(0);
 				DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
 						                                       datagramPacket.getAddress(), datagramPacket.getPort());
 				threadedNetworkConnector.send(sendPacket);
