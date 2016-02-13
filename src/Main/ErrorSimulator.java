@@ -8,7 +8,9 @@ import java.util.Scanner;
 import General.Config;
 import General.NetworkConnector;
 import General.SimulationMode;
+import NetworkTypes.ErrorCode;
 import NetworkTypes.Operation;
+import PacketParsers.ErrorPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -67,9 +69,10 @@ public class ErrorSimulator {
 	
 	private void waitForRequest() {
 		// for RRQ/WRQ
-		InetAddress address = serverAddress;
-		int         port    = serverPort;
-		Operation   opcode  = Operation.INVALID;
+		InetAddress address   = serverAddress;
+		int         port      = serverPort;
+		Operation   opcode    = Operation.INVALID;
+		boolean     illegalOp = false;
 				
 		//Receive packet from client
 		DatagramPacket dpClient = clientConnector.receive();
@@ -84,12 +87,15 @@ public class ErrorSimulator {
 			
 			// wait for ACK from server
 			DatagramPacket dpServer   = serverConnector.receive();
+			illegalOp = checkForIllegalOp(dpServer);
+			
 			InetAddress threadAddress = dpServer.getAddress();
 			int         threadPort    = dpServer.getPort();
 			
 			// forward ACK to client
 			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
 			clientConnector.send(dpClient);
+			if(illegalOp) { return; }
 			
 			wrqLink(dpClient, threadAddress, threadPort);
 		} else if (opcode == Operation.RRQ) {
@@ -120,12 +126,14 @@ public class ErrorSimulator {
 	
 	private void wrqLink(DatagramPacket dpClient, InetAddress threadAddress, int threadPort) {
 		System.out.println("WRQ LINK");
-		boolean     done    = false;
-		Operation   opcode  = Operation.INVALID;
+		boolean     done      = false;
+		Operation   opcode    = Operation.INVALID;
+		boolean     illegalOp = false;
 		
 		//Receive packet from client
 		System.out.println("CLIENT SEND DATA");
 		dpClient     = clientConnector.receive();
+		illegalOp = checkForIllegalOp(dpClient);
 		
 		while (!done) {
 
@@ -148,9 +156,11 @@ public class ErrorSimulator {
 				badConnector.receive();
 			}
 			serverConnector.send(sendServerPacket);
+			if(illegalOp) { return; }
 			
 			// wait for ACK from server
 			DatagramPacket dpServer = serverConnector.receive();
+			illegalOp = checkForIllegalOp(dpServer);
 			
 			// forward ACK to client
 			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
@@ -161,6 +171,7 @@ public class ErrorSimulator {
 				badConnector.receive();
 			}
 			clientConnector.send(dpClient);
+			if(illegalOp) { return; }
 			
 			if (!done) {
 				dpClient = clientConnector.receive();
@@ -172,10 +183,12 @@ public class ErrorSimulator {
 		Operation opcode = Operation.INVALID;
 		boolean done     = false;
 		boolean clientKnowsServer = false;
+		boolean illegalOp = false;
 		
 		while (!done) {
 			// receive DATA from server
 			DatagramPacket dpServer = serverConnector.receive();
+			illegalOp = checkForIllegalOp(dpServer);
 			threadAddress = dpServer.getAddress();
 			threadPort    = dpServer.getPort();
 			
@@ -198,9 +211,11 @@ public class ErrorSimulator {
 			}
 			clientConnector.send(responsePacket);
 			clientKnowsServer = true;
+			if(illegalOp) { return; }
 			
 			// receive ACK from client
 			DatagramPacket dpClient = clientConnector.receive();
+			illegalOp = checkForIllegalOp(dpClient);
 			
 			// forward ACK to server
 			dpServer = handleSimulationModes(dpClient, threadAddress, threadPort);
@@ -210,6 +225,7 @@ public class ErrorSimulator {
 				badConnector.receive();
 			}
 			serverConnector.send(dpServer);
+			if(illegalOp) { return; }
 		}
 
 		/*
@@ -532,5 +548,16 @@ public class ErrorSimulator {
 		
 		simMode = SimulationMode.values()[value];
 		System.out.println("Using " + simMode.toString()); 
+	}
+	
+	private boolean checkForIllegalOp(DatagramPacket packet) {
+		Operation checkOp = PacketParser.getOpcode(packet.getData(), packet.getLength());
+		if(checkOp == Operation.ERROR) {
+			ErrorCode errCode = ErrorPacketParser.getErrorCode(packet.getData());
+			if(errCode == ErrorCode.ILLEGAL_OPERATION) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
