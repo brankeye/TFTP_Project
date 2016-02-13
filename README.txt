@@ -10,30 +10,42 @@ for example: write test.txt
 Where server files are stored: src/Main/ServerStorage
 Where client files are stored: src/Main/ClientStorage
 
+
+
 Files
-Client.java - the client that sends read/write requests
+Client.java - The client that sends read/write requests
 
-ErrorSimulator.java - error simulator - only acts as intermediate host between server-client for iteration 1
+ErrorSimulator.java - Simulates errors between the client and server
 
-Server.java - the server that responds to read/write requests
+Server.java - The server that responds to read/write requests
 
-AckPacketParser.java - parser for ACK packets
+AckPacketParser.java - Parser for ACK packets
 
-DataPacketParser.java - parser for DATA packets
+DataPacketParser.java - Parser for DATA packets
 
-ErrorPacketParser.java - parser for Error packets
+ErrorPacketParser.java - Parser for Error packets
 
-RequestPacketParser.java - parser for request packets
+RequestPacketParser.java - Parser for request packets
 
-Operation.java - Enum for the different TFTP Opcodes
+PacketParser.java - Super class for AckPacketParser, DataPacketParser, and RequestPacketParser
 
 TransferMode.java - Enum for the different transfer modes (netascii/octet)
 
+ErrorCode.java - Enum for error codes
+
+Operation.java - Enum for the different TFTP Opcodes
+
 Config.java - Some configuration parameters
 
-NetworkConnector.java - class to help send/receive packets
+NetworkConnector.java - Class to help send/receive packets
 
-PacketReader.java - class to print packet information
+PacketReader.java - Class to print packet information
+
+SimulationMode.java - Enum for error simulation modes
+
+FileServer.java - 
+
+
 
 
 Divided Work:
