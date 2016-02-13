@@ -170,6 +170,7 @@ public class ErrorSimulator {
 	private void rrqLink(InetAddress clientAddress, int clientPort) {
 		Operation opcode = Operation.INVALID;
 		boolean done     = false;
+		boolean clientKnowsServer = false;
 		
 		while (!done) {
 			// receive DATA from server
@@ -190,11 +191,12 @@ public class ErrorSimulator {
 			DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
 			//clientConnector.send(responsePacket);
 			
-			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+			if(clientKnowsServer && simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
 				NetworkConnector tempConn = new NetworkConnector();
 				tempConn.send(responsePacket);
 			} else {
 				clientConnector.send(responsePacket);
+				clientKnowsServer = true;
 			}
 			
 			// receive ACK from client

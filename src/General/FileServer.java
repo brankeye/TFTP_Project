@@ -64,13 +64,18 @@ public class FileServer {
 			
 			// wait for ACK packet
 			packet = networkConnector.receive();
-			if(expectedAddress != packet.getAddress() && expectedPort != packet.getPort()) {
+			
+			/*
+			if(expectedPort != packet.getPort()) {
 				// recover from ErrorCode 5
 				System.out.println("Received packet with strange TID.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.UNKNOWN_TID, "Received packet with bad TID!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
+				return;
 			}
+			*/
+			
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 				System.out.println("Received ERROR packet. Transfer stopped.");
@@ -97,17 +102,21 @@ public class FileServer {
 			
 			// wait for DATA packet and validate
 			packet = networkConnector.receive();
+			
+			/*
 			if(expectedPort == -1) {
-				setExpectedHost(packet.getAddress(), packet.getPort());
+				setExpectedHost(packet.getPort());
 			}
 			
-			if(expectedAddress != packet.getAddress() && expectedPort != packet.getPort()) {
+			if(expectedPort != packet.getPort()) {
 				// recover from ErrorCode 5
 				System.out.println("Received packet with strange TID.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.UNKNOWN_TID, "Received packet with bad TID!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
+				return;
 			}
+			*/
 			
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
@@ -153,8 +162,7 @@ public class FileServer {
 		}
 	}
 	
-	public void setExpectedHost(InetAddress addr, int p) {
-		expectedAddress = addr;
+	public void setExpectedHost(int p) {
 		expectedPort    = p;
 	}
 }

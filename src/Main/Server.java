@@ -81,7 +81,7 @@ public class Server {
 			datagramPacket           = receivedPacket;
 			threadedNetworkConnector = new NetworkConnector();
 			fileServer               = new FileServer(threadedNetworkConnector);
-			fileServer.setExpectedHost(datagramPacket.getAddress(), datagramPacket.getPort());
+			fileServer.setExpectedHost(datagramPacket.getPort());
 		}
 
 		@Override
