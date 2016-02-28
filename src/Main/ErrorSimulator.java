@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 import General.Config;
+import General.FileServer;
 import General.NetworkConnector;
 import General.SimulationMode;
 import NetworkTypes.ErrorCode;
@@ -31,8 +32,8 @@ public class ErrorSimulator {
 	private Scanner        scanner;
 	private SimulationMode simMode;
 	
-	InetAddress clientAddress;
-	int         clientPort;
+	InetAddress clientAddress = null;
+	int         clientPort = -1;
 	
 	NetworkConnector badConnector;
 	
@@ -58,188 +59,68 @@ public class ErrorSimulator {
 		ErrorSimulator es = new ErrorSimulator();
 
 		es.simulationMode();
-		while(true){
-			es.waitForRequest();
-
-			//es.clientLink();
-			//es.serverLink();
-		}
-
+		
+		es.clientToServerLink();
+		es.serverToClientLink();
 	}
 	
-	private void waitForRequest() {
-		// for RRQ/WRQ
-		InetAddress address   = serverAddress;
-		int         port      = serverPort;
-		Operation   opcode    = Operation.INVALID;
-		boolean     illegalOp = false;
+	private void clientToServerLink() {
+		//Receive packet from client
+		ClientLink link = new ClientLink();
+		Thread t = new Thread(link);
+		t.start();
+	}
+	
+	private void serverToClientLink() {
+		//Receive packet from server
+		ServerLink link = new ServerLink();
+		Thread t = new Thread(link);
+		t.start();
+	}
+	
+	private class ClientLink implements Runnable {
+
+		@Override
+		public void run() {
+			while(true) {
+				//Receive packet from client
+				DatagramPacket dpClient = clientConnector.receive();
+				clientAddress = dpClient.getAddress();
+				clientPort    = dpClient.getPort();
 				
-		//Receive packet from client
-		DatagramPacket dpClient = clientConnector.receive();
-		opcode = PacketParser.getOpcode(dpClient.getData(),dpClient.getLength());
-		clientAddress = dpClient.getAddress();
-		clientPort    = dpClient.getPort();
-		
-		if (opcode == Operation.WRQ) {
-			// forward packet to server
-			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
-			serverConnector.send(sendServerPacket);
-			
-			// wait for ACK from server
-			DatagramPacket dpServer   = serverConnector.receive();
-			illegalOp = checkForIllegalOp(dpServer);
-			
-			InetAddress threadAddress = dpServer.getAddress();
-			int         threadPort    = dpServer.getPort();
-			
-			// forward ACK to client
-			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
-			clientConnector.send(dpClient);
-			if(illegalOp) { return; }
-			
-			wrqLink(dpClient, threadAddress, threadPort);
-		} else if (opcode == Operation.RRQ) {
-			// forward packet to server
-			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
-			serverConnector.send(sendServerPacket);
-
-			rrqLink(clientAddress, clientPort);
-		} else {
-			// presumably this is very bad?
-		}
-		/*
-		clientAddress = dpClient.getAddress();
-		clientPort	  = dpClient.getPort();		//used to send back to client
-		
-		//Send packet to server
-		Operation opcode = PacketParser.getOpcode(dpClient.getData());
-		if(opcode == Operation.DATA || opcode == Operation.ACK) {
-			address = threadedAddress;
-			port    = threadedPort;
-		}
-		
-		//DatagramPacket sendServerPacket = new DatagramPacket(dpClient.getData(), dpClient.getLength(), address, port);
-		DatagramPacket sendServerPacket = handleSimulationModes(dpClient, address, port);
-		serverConnector.send(sendServerPacket);
-		*/
-	}
-	
-	private void wrqLink(DatagramPacket dpClient, InetAddress threadAddress, int threadPort) {
-		System.out.println("WRQ LINK");
-		boolean     done      = false;
-		Operation   opcode    = Operation.INVALID;
-		boolean     illegalOp = false;
-		
-		//Receive packet from client
-		System.out.println("CLIENT SEND DATA");
-		dpClient     = clientConnector.receive();
-		illegalOp = checkForIllegalOp(dpClient);
-		
-		while (!done) {
-
-			clientAddress = dpClient.getAddress();
-			clientPort	  = dpClient.getPort();		//used to send back to client
-
-			opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
-			if (opcode == Operation.DATA) {		
-				if (dpClient.getLength() < Config.MAX_BYTE_ARR_SIZE) {
-					done = true;
-					System.out.println("DONE WRITE");
+				DatagramPacket sendPacket;
+				if(threadAddress == null) {
+					sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
+				} else {
+					sendPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
 				}
-			}
-			
-			// send packet to server
-			DatagramPacket sendServerPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
-			//serverConnector.send(sendServerPacket);
-			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
-				badConnector.send(sendServerPacket);
-				badConnector.receive();
-			}
-			serverConnector.send(sendServerPacket);
-			if(illegalOp) { return; }
-			
-			// wait for ACK from server
-			DatagramPacket dpServer = serverConnector.receive();
-			illegalOp = checkForIllegalOp(dpServer);
-			
-			// forward ACK to client
-			dpClient = handleSimulationModes(dpServer, clientAddress, clientPort);
-			//clientConnector.send(dpClient);
-			
-			if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
-				badConnector.send(dpClient);
-				badConnector.receive();
-			}
-			clientConnector.send(dpClient);
-			if(illegalOp) { return; }
-			
-			if (!done) {
-				dpClient = clientConnector.receive();
+				if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+					badConnector.send(sendPacket);
+					badConnector.receive();
+				}
+				serverConnector.send(sendPacket);
 			}
 		}
 	}
 	
-	private void rrqLink(InetAddress clientAddress, int clientPort) {
-		Operation opcode = Operation.INVALID;
-		boolean done     = false;
-		boolean clientKnowsServer = false;
-		boolean illegalOp = false;
-		
-		while (!done) {
-			// receive DATA from server
-			DatagramPacket dpServer = serverConnector.receive();
-			illegalOp = checkForIllegalOp(dpServer);
-			threadAddress = dpServer.getAddress();
-			threadPort    = dpServer.getPort();
-			
-			opcode = PacketParser.getOpcode(dpServer.getData(), dpServer.getLength());
-			if (opcode == Operation.DATA) {		
-				if (dpServer.getLength() < Config.MAX_BYTE_ARR_SIZE) {
-					done = true;
-					System.out.println("DONE READ");
-				}
-			}
-			
-			//Send server's response to client
-			//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
-			DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
-			//clientConnector.send(responsePacket);
-			
-			if(clientKnowsServer && simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
-				badConnector.send(responsePacket);
-				badConnector.receive();
-			}
-			clientConnector.send(responsePacket);
-			clientKnowsServer = true;
-			if(illegalOp) { return; }
-			
-			// receive ACK from client
-			DatagramPacket dpClient = clientConnector.receive();
-			illegalOp = checkForIllegalOp(dpClient);
-			
-			// forward ACK to server
-			dpServer = handleSimulationModes(dpClient, threadAddress, threadPort);
-			//serverConnector.send(dpServer);
-			if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
-				badConnector.send(dpServer);
-				badConnector.receive();
-			}
-			serverConnector.send(dpServer);
-			if(illegalOp) { return; }
-		}
+	private class ServerLink implements Runnable {
 
-		/*
-		//Receive the response from server
-		DatagramPacket dpServer = serverConnector.receive();
-		threadedAddress = dpServer.getAddress();
-		threadedPort    = dpServer.getPort();
-		
-		//Send server's response to client
-		//DatagramPacket responsePacket = new DatagramPacket(dpServer.getData(), dpServer.getLength(), clientAddress, clientPort);
-		DatagramPacket responsePacket = handleSimulationModes(dpServer, clientAddress, clientPort);
-		clientConnector.send(responsePacket);
-		*/
-		
+		@Override
+		public void run() {
+			while(true) {
+				//Receive packet from server
+				DatagramPacket dpServer = serverConnector.receive();
+				threadAddress = dpServer.getAddress();
+				threadPort    = dpServer.getPort();
+				
+				DatagramPacket sendPacket = handleSimulationModes(dpServer, clientAddress, clientPort);
+				if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
+					badConnector.send(sendPacket);
+					badConnector.receive();
+				}
+				clientConnector.send(sendPacket);
+			}
+		}
 	}
 	
 	// returns the modified datagrampacket
