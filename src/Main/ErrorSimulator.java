@@ -501,6 +501,24 @@ public class ErrorSimulator {
 			while(!isValid) {
 				System.out.println("Please select a network error simulation mode:");
 				System.out.println("0  - DEFAULT_MODE");
+				
+				System.out.println("1  - LOSE_RRQ_PACKET_MODE");
+				System.out.println("2  - LOSE_WRQ_PACKET_MODE");
+				System.out.println("3  - LOSE_DATA_PACKET_MODE");
+				System.out.println("4  - LOSE_ACK_PACKET_MODE");
+				System.out.println("5  - LOSE_ERROR_PACKET_MODE");
+				
+				System.out.println("6  - DELAY_RRQ_PACKET_MODE");
+				System.out.println("7  - DELAY_WRQ_PACKET_MODE");
+				System.out.println("8  - DELAY_DATA_PACKET_MODE");
+				System.out.println("9  - DELAY_ACK_PACKET_MODE");
+				System.out.println("10 - DELAY_ERROR_PACKET_MODE");
+				
+				System.out.println("11 - DUPLICATE_RRQ_PACKET_MODE");
+				System.out.println("12 - DUPLICATE_WRQ_PACKET_MODE");
+				System.out.println("13 - DUPLICATE_DATA_PACKET_MODE");
+				System.out.println("14 - DUPLICATE_ACK_PACKET_MODE");
+				System.out.println("15 - DUPLICATE_ERROR_PACKET_MODE");
 							
 				input = scanner.nextLine();
 
@@ -521,48 +539,7 @@ public class ErrorSimulator {
 			networkSimMode = NetworkSimulationMode.values()[value];
 		}
 		
-		System.out.println("Using " + packetSimMode.toString()); 
+		System.out.println("Packet Error Simulation:  using " + packetSimMode.toString());
+		System.out.println("Network Error Simulation: using " + networkSimMode.toString()); 
 	}
 }
-
-/*
-while(!isValid) {
-	System.out.println("Please select a simulation mode:");
-	System.out.println("0  - DEFAULT_MODE");
-	System.out.println("1  - CORRUPT_OPERATION_MODE");
-	System.out.println("2  - CORRUPT_DATA_BLOCK_NUM_MODE");
-	System.out.println("3  - REMOVE_BLOCK_NUM_MODE");
-	System.out.println("4  - CORRUPT_CLIENT_TRANSFER_ID_MODE");
-	System.out.println("5  - CORRUPT_SERVER_TRANSFER_ID_MODE");
-	System.out.println("6  - APPEND_PACKET_MODE");
-	System.out.println("7  - SHRINK_PACKET_MODE");
-	System.out.println("8  - CORRUPT_FILENAME_MODE");
-	System.out.println("9  - CORRUPT_TRANSFER_MODE");
-	System.out.println("10 - CORRUPT_FILENAME_DELIMITER_MODE");
-	System.out.println("11 - CORRUPT_TRANSFER_DELIMITER_MODE");
-	System.out.println("12 - REMOVE_FILENAME_MODE");
-	System.out.println("13 - REMOVE_TRANSFER_MODE");
-	System.out.println("14 - REMOVE_FILENAME_DELIMITER_MODE");
-	System.out.println("15 - REMOVE_TRANSFER_DELIMITER_MODE");
-	System.out.println("16 - CORRUPT_DATA_MODE");
-	System.out.println("17 - REMOVE_DATA_MODE");
-	System.out.println("18 - CORRUPT_ACK_BLOCK_NUM_MODE");
-	System.out.println("19 - GROW_DATA_EXCEED_SIZE_MODE");
-				
-	input = scanner.nextLine();
-
-	// assume input is valid, if not valid, loop again
-	isValid = true;
-	try {
-		value = Integer.parseInt(input);
-	} catch(NumberFormatException e) {
-		isValid = false;
-	}
-	
-	if(isValid) {
-		if(value < 0 || value > SimulationMode.values().length - 1) {
-			isValid = false;
-		}
-	}
-}
-*/
