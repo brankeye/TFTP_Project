@@ -6,12 +6,10 @@ import java.net.UnknownHostException;
 import java.util.Scanner;
 
 import General.Config;
-import General.FileServer;
 import General.NetworkConnector;
-import General.SimulationMode;
-import NetworkTypes.ErrorCode;
+import General.NetworkSimulationMode;
+import General.PacketSimulationMode;
 import NetworkTypes.Operation;
-import PacketParsers.ErrorPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -30,7 +28,8 @@ public class ErrorSimulator {
 	private int         threadPort;
 	
 	private Scanner        scanner;
-	private SimulationMode simMode;
+	private PacketSimulationMode  packetSimMode;
+	private NetworkSimulationMode networkSimMode;
 	
 	InetAddress clientAddress = null;
 	int         clientPort = -1;
@@ -94,7 +93,7 @@ public class ErrorSimulator {
 				} else {
 					sendPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
 				}
-				if(simMode == SimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+				if(packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
 					badConnector.send(sendPacket);
 					badConnector.receive();
 				}
@@ -114,7 +113,7 @@ public class ErrorSimulator {
 				threadPort    = dpServer.getPort();
 				
 				DatagramPacket sendPacket = handleSimulationModes(dpServer, clientAddress, clientPort);
-				if(simMode == SimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
+				if(packetSimMode == PacketSimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
 					badConnector.send(sendPacket);
 					badConnector.receive();
 				}
@@ -130,10 +129,10 @@ public class ErrorSimulator {
 			return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port);
 		}
 		
-		switch(simMode) {
+		switch(packetSimMode) {
 			case DEFAULT_MODE:                    { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
 			case CORRUPT_OPERATION_MODE:          { return handleCorruptOperationMode(simPacket, address, port); }
-			case CORRUPT_BLOCK_NUM_MODE:          { return handleCorruptBlockNumMode(simPacket, address, port); }
+			case CORRUPT_DATA_BLOCK_NUM_MODE:     { return handleCorruptDataBlockNumMode(simPacket, address, port); }
 			case REMOVE_BLOCK_NUM_MODE:           { return handleRemoveBlockNumMode(simPacket, address, port); }
 			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { return handleCorruptClientTransferIDMode(simPacket, address, port); }
 			case CORRUPT_SERVER_TRANSFER_ID_MODE: { return handleCorruptServerTransferIDMode(simPacket, address, port); }
@@ -149,6 +148,8 @@ public class ErrorSimulator {
 			case REMOVE_TRANSFER_DELIMITER_MODE:  { return handleRemoveTransferDelimiterMode(simPacket, address, port); }
 			case CORRUPT_DATA_MODE:               { return handleCorruptDataMode(simPacket, address, port); }
 			case REMOVE_DATA_MODE:                { return handleRemoveDataMode(simPacket, address, port); }
+			case CORRUPT_ACK_BLOCK_NUM_MODE:      { return handleCorruptAckBlockNumMode(simPacket, address, port); }
+			case GROW_DATA_EXCEED_SIZE_MODE:      { return handleGrowDataExceedSizeMode(simPacket, address, port); }
 			default: return null;
 		}
 	}
@@ -167,12 +168,12 @@ public class ErrorSimulator {
 	}
 	
 	// 2 - changes the block number in DATA and ACK packets
-	private DatagramPacket handleCorruptBlockNumMode(DatagramPacket simPacket, InetAddress address, int port) {
+	private DatagramPacket handleCorruptDataBlockNumMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data   = simPacket.getData();
 		int    length = simPacket.getLength();
 		
 		Operation opcode = PacketParser.getOpcode(data, length);
-		if(opcode == Operation.DATA || opcode == Operation.ACK) {
+		if(opcode == Operation.DATA) {
 			if(length >= 4) {
 				data[2] = -1;
 				data[3] = -1;
@@ -391,25 +392,46 @@ public class ErrorSimulator {
 		return new DatagramPacket(reducedData, reducedData.length, address, port);
 	}
 	
-		//convert bytes to string to display --- for future use
-	public String byteToString(byte[] b, int len){
-			String s = new String(b);  // Create new String Object and assign byte[] to it
-			try {
-				s = new String(b, "UTF-8");  // decode using "UTF-8"
-			} catch (Exception e) {
-				e.printStackTrace();
+	// 18 Corrupts block number of ACK packet
+	private DatagramPacket handleCorruptAckBlockNumMode(DatagramPacket simPacket, InetAddress address, int port) {
+		byte[] data   = simPacket.getData();
+		int    length = simPacket.getLength();
+		
+		Operation opcode = PacketParser.getOpcode(data, length);
+		if(opcode == Operation.ACK) {
+			if(length >= 4) {
+				data[2] = -1;
+				data[3] = -1;
 			}
-			return s;
 		}
+		
+		return new DatagramPacket(data, length, address, port);
+	}
+	
+	// 19 Removes all data from the packet, left with the opcode
+	private DatagramPacket handleGrowDataExceedSizeMode(DatagramPacket simPacket, InetAddress address, int port) {
+		byte[] data = simPacket.getData();
+		byte[] newData = new byte[Config.MAX_PAYLOAD_SIZE * 2];
+		for(int i = 0; i < data.length; i++){
+			newData[i] = data[i];
+		}
+		for(int k = data.length; k < newData.length; k++) {
+			newData[k] = -1;
+		}
+		return new DatagramPacket(newData, newData.length, address, port);
+	}
 	
 		// this gets the simulation mode from the error sim user
-	public void simulationMode() {
+	private void simulationMode() {
 		boolean isValid = false;
 		String input = "";
 		int value    = -1;
 		
 		while(!isValid) {
-			System.out.println("Please select a simulation mode (0 for default):");
+			System.out.println("Please select an error testing operation:");
+			System.out.println("0 - DEFAULT MODE");
+			System.out.println("1 - PACKET ERRORS MODE");
+			System.out.println("2 - NETWORK ERRORS MODE");
 			input = scanner.nextLine();
 		
 			// assume input is valid, if not valid, loop again
@@ -421,24 +443,126 @@ public class ErrorSimulator {
 			}
 			
 			if(isValid) {
-				if(value < 0 || value > SimulationMode.values().length - 1) {
+				if(value < 0 || value > 2) {
 					isValid = false;
 				}
 			}
 		}
 		
-		simMode = SimulationMode.values()[value];
-		System.out.println("Using " + simMode.toString()); 
-	}
-	
-	private boolean checkForIllegalOp(DatagramPacket packet) {
-		Operation checkOp = PacketParser.getOpcode(packet.getData(), packet.getLength());
-		if(checkOp == Operation.ERROR) {
-			ErrorCode errCode = ErrorPacketParser.getErrorCode(packet.getData());
-			if(errCode == ErrorCode.ILLEGAL_OPERATION) {
-				return true;
+		isValid = false;
+		input   = "";
+		if(value == 0) { // DEFAULT
+			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
+			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+		} else if(value == 1) { // PACKET ERRORS
+			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+			while(!isValid) {
+				System.out.println("Please select a packet error simulation mode:");
+				System.out.println("0  - DEFAULT_MODE");
+				System.out.println("1  - CORRUPT_OPERATION_MODE");
+				System.out.println("2  - CORRUPT_DATA_BLOCK_NUM_MODE");
+				System.out.println("3  - REMOVE_BLOCK_NUM_MODE");
+				System.out.println("4  - CORRUPT_CLIENT_TRANSFER_ID_MODE");
+				System.out.println("5  - CORRUPT_SERVER_TRANSFER_ID_MODE");
+				System.out.println("6  - APPEND_PACKET_MODE");
+				System.out.println("7  - SHRINK_PACKET_MODE");
+				System.out.println("8  - CORRUPT_FILENAME_MODE");
+				System.out.println("9  - CORRUPT_TRANSFER_MODE");
+				System.out.println("10 - CORRUPT_FILENAME_DELIMITER_MODE");
+				System.out.println("11 - CORRUPT_TRANSFER_DELIMITER_MODE");
+				System.out.println("12 - REMOVE_FILENAME_MODE");
+				System.out.println("13 - REMOVE_TRANSFER_MODE");
+				System.out.println("14 - REMOVE_FILENAME_DELIMITER_MODE");
+				System.out.println("15 - REMOVE_TRANSFER_DELIMITER_MODE");
+				System.out.println("16 - CORRUPT_DATA_MODE");
+				System.out.println("17 - REMOVE_DATA_MODE");
+				System.out.println("18 - CORRUPT_ACK_BLOCK_NUM_MODE");
+				System.out.println("19 - GROW_DATA_EXCEED_SIZE_MODE");
+							
+				input = scanner.nextLine();
+
+				// assume input is valid, if not valid, loop again
+				isValid = true;
+				try {
+					value = Integer.parseInt(input);
+				} catch(NumberFormatException e) {
+					isValid = false;
+				}
+				
+				if(isValid) {
+					if(value < 0 || value > PacketSimulationMode.values().length - 1) {
+						isValid = false;
+					}
+				}
 			}
+			packetSimMode = PacketSimulationMode.values()[value];
+		} else if(value == 2) { // NETWORK ERRORS
+			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
+			while(!isValid) {
+				System.out.println("Please select a network error simulation mode:");
+				System.out.println("0  - DEFAULT_MODE");
+							
+				input = scanner.nextLine();
+
+				// assume input is valid, if not valid, loop again
+				isValid = true;
+				try {
+					value = Integer.parseInt(input);
+				} catch(NumberFormatException e) {
+					isValid = false;
+				}
+				
+				if(isValid) {
+					if(value < 0 || value > NetworkSimulationMode.values().length - 1) {
+						isValid = false;
+					}
+				}
+			}
+			networkSimMode = NetworkSimulationMode.values()[value];
 		}
-		return false;
+		
+		System.out.println("Using " + packetSimMode.toString()); 
 	}
 }
+
+/*
+while(!isValid) {
+	System.out.println("Please select a simulation mode:");
+	System.out.println("0  - DEFAULT_MODE");
+	System.out.println("1  - CORRUPT_OPERATION_MODE");
+	System.out.println("2  - CORRUPT_DATA_BLOCK_NUM_MODE");
+	System.out.println("3  - REMOVE_BLOCK_NUM_MODE");
+	System.out.println("4  - CORRUPT_CLIENT_TRANSFER_ID_MODE");
+	System.out.println("5  - CORRUPT_SERVER_TRANSFER_ID_MODE");
+	System.out.println("6  - APPEND_PACKET_MODE");
+	System.out.println("7  - SHRINK_PACKET_MODE");
+	System.out.println("8  - CORRUPT_FILENAME_MODE");
+	System.out.println("9  - CORRUPT_TRANSFER_MODE");
+	System.out.println("10 - CORRUPT_FILENAME_DELIMITER_MODE");
+	System.out.println("11 - CORRUPT_TRANSFER_DELIMITER_MODE");
+	System.out.println("12 - REMOVE_FILENAME_MODE");
+	System.out.println("13 - REMOVE_TRANSFER_MODE");
+	System.out.println("14 - REMOVE_FILENAME_DELIMITER_MODE");
+	System.out.println("15 - REMOVE_TRANSFER_DELIMITER_MODE");
+	System.out.println("16 - CORRUPT_DATA_MODE");
+	System.out.println("17 - REMOVE_DATA_MODE");
+	System.out.println("18 - CORRUPT_ACK_BLOCK_NUM_MODE");
+	System.out.println("19 - GROW_DATA_EXCEED_SIZE_MODE");
+				
+	input = scanner.nextLine();
+
+	// assume input is valid, if not valid, loop again
+	isValid = true;
+	try {
+		value = Integer.parseInt(input);
+	} catch(NumberFormatException e) {
+		isValid = false;
+	}
+	
+	if(isValid) {
+		if(value < 0 || value > SimulationMode.values().length - 1) {
+			isValid = false;
+		}
+	}
+}
+*/

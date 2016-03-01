@@ -3,12 +3,12 @@ package General;
 // CORRUPT - Won't change byte array length but modifies the item
 // REMOVE  - Completely removes the item
 // APPEND  - Adds stuff to the end of the packet
-public enum SimulationMode {
+public enum PacketSimulationMode {
 	DEFAULT_MODE("Default"),
 	
 	// General Errors (effects 2 or more packet types)
 	CORRUPT_OPERATION_MODE("Corrupt Operation"), // corrupt all OPCODES
-	CORRUPT_BLOCK_NUM_MODE("Corrupt Block Number"),
+	CORRUPT_DATA_BLOCK_NUM_MODE("Corrupt Data Block Number"),
 	
 	REMOVE_BLOCK_NUM_MODE("Remove Block Number"),
 	
@@ -31,14 +31,17 @@ public enum SimulationMode {
 	
 	// DATA Errors
 	CORRUPT_DATA_MODE("Corrupt Data"),
-	REMOVE_DATA_MODE("Remove Data");
+	REMOVE_DATA_MODE("Remove Data"),
+	
+	CORRUPT_ACK_BLOCK_NUM_MODE("Corrupt Ack Block Num Mode"),
+	GROW_DATA_EXCEED_SIZE_MODE("Grow Data Exceed Size Mode");
 	
     private final String text;
 
     /**
      * @param text
      */
-    private SimulationMode(final String text) {
+    private PacketSimulationMode(final String text) {
         this.text = text;
     }
 
