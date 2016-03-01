@@ -30,6 +30,7 @@ public class ErrorSimulator {
 	private Scanner        scanner;
 	private PacketSimulationMode  packetSimMode;
 	private NetworkSimulationMode networkSimMode;
+	int     selectedPacketNumber = 1; // this is which packet the Network Error Sim will target (starts at 1).
 	
 	InetAddress clientAddress = null;
 	int         clientPort = -1;
@@ -427,6 +428,7 @@ public class ErrorSimulator {
 		String input = "";
 		int value    = -1;
 		
+		// select the Packet Sim mode
 		while(!isValid) {
 			System.out.println("Please select an error testing operation:");
 			System.out.println("0 - DEFAULT MODE");
@@ -456,6 +458,8 @@ public class ErrorSimulator {
 			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
 		} else if(value == 1) { // PACKET ERRORS
 			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+			
+			// select the Network Sim mode
 			while(!isValid) {
 				System.out.println("Please select a packet error simulation mode:");
 				System.out.println("0  - DEFAULT_MODE");
@@ -537,9 +541,39 @@ public class ErrorSimulator {
 				}
 			}
 			networkSimMode = NetworkSimulationMode.values()[value];
+			
+			// select which packet the Network Sim should target
+			int netSM = networkSimMode.ordinal();
+			if(netSM != 0 && netSM % 5 != 1 && netSM % 5 != 2) {
+				isValid = false;
+				input   = "";
+				
+				while(!isValid) {
+					System.out.println("Please select the packet number (1 and up):");
+					input = scanner.nextLine();
+	
+					// assume input is valid, if not valid, loop again
+					isValid = true;
+					try {
+						value = Integer.parseInt(input);
+					} catch(NumberFormatException e) {
+						isValid = false;
+					}
+					
+					if(isValid) {
+						if(value < 1) {
+							isValid = false;
+						}
+					}
+				}
+				selectedPacketNumber = value;
+			}
 		}
 		
 		System.out.println("Packet Error Simulation:  using " + packetSimMode.toString());
-		System.out.println("Network Error Simulation: using " + networkSimMode.toString()); 
+		System.out.println("Network Error Simulation: using " + networkSimMode.toString());
+		if(networkSimMode != NetworkSimulationMode.DEFAULT_MODE) {
+			System.out.println("Targeting packet number: " + selectedPacketNumber);
+		}
 	}
 }
