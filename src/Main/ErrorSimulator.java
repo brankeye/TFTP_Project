@@ -31,6 +31,7 @@ public class ErrorSimulator {
 	private PacketSimulationMode  packetSimMode;
 	private NetworkSimulationMode networkSimMode;
 	int     selectedPacketNumber = 1; // this is which packet the Network Error Sim will target (starts at 1).
+	int     delayAmount = 1000; // 3 milliseconds delay
 	
 	InetAddress clientAddress = null;
 	int         clientPort = -1;
@@ -424,18 +425,105 @@ public class ErrorSimulator {
 	
 		// this gets the simulation mode from the error sim user
 	private void simulationMode() {
-		boolean isValid = false;
-		String input = "";
+		String prompt = "";
 		int value    = -1;
 		
 		// select the Packet Sim mode
-		while(!isValid) {
-			System.out.println("Please select an error testing operation:");
-			System.out.println("0 - DEFAULT MODE");
-			System.out.println("1 - PACKET ERRORS MODE");
-			System.out.println("2 - NETWORK ERRORS MODE");
-			input = scanner.nextLine();
+		prompt = "Please select an error testing operation:\n"
+			   + "0 - DEFAULT MODE\n"
+			   + "1 - PACKET ERRORS MODE\n"
+			   + "2 - NETWORK ERRORS MODE\n";
+		value = getIntegerAsInput(prompt, 0, 2);
 		
+		if(value == 0) { // DEFAULT
+			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
+			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+		} else if(value == 1) { // PACKET ERRORS
+			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+			
+			// select the Network Sim mode
+			prompt = "Please select a packet error simulation mode:\n"
+				   + "0  - DEFAULT_MODE\n"
+				   + "1  - CORRUPT_OPERATION_MODE\n"
+				   + "2  - CORRUPT_DATA_BLOCK_NUM_MODE\n"
+				   + "3  - REMOVE_BLOCK_NUM_MODE\n"
+				   + "4  - CORRUPT_CLIENT_TRANSFER_ID_MODE\n"
+				   + "5  - CORRUPT_SERVER_TRANSFER_ID_MODE\n"
+				   + "6  - APPEND_PACKET_MODE\n"
+				   + "7  - SHRINK_PACKET_MODE\n"
+				   + "8  - CORRUPT_FILENAME_MODE\n"
+				   + "9  - CORRUPT_TRANSFER_MODE\n"
+				   + "10 - CORRUPT_FILENAME_DELIMITER_MODE\n"
+				   + "11 - CORRUPT_TRANSFER_DELIMITER_MODE\n"
+				   + "12 - REMOVE_FILENAME_MODE\n"
+				   + "13 - REMOVE_TRANSFER_MODE\n"
+				   + "14 - REMOVE_FILENAME_DELIMITER_MODE\n"
+				   + "15 - REMOVE_TRANSFER_DELIMITER_MODE\n"
+				   + "16 - CORRUPT_DATA_MODE\n"
+				   + "17 - REMOVE_DATA_MODE\n"
+				   + "18 - CORRUPT_ACK_BLOCK_NUM_MODE\n"
+				   + "19 - GROW_DATA_EXCEED_SIZE_MODE\n";
+			
+			int userInput = getIntegerAsInput(prompt, 0, PacketSimulationMode.values().length - 1);
+			packetSimMode = PacketSimulationMode.values()[userInput];
+		} else if(value == 2) { // NETWORK ERRORS
+			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
+			prompt = "Please select a network error simulation mode:\n"
+			       + "0  - DEFAULT_MODE\n"
+			       + "1  - LOSE_RRQ_PACKET_MODE\n"
+	               + "2  - LOSE_WRQ_PACKET_MODE\n"
+			       + "3  - LOSE_DATA_PACKET_MODE\n"
+	               + "4  - LOSE_ACK_PACKET_MODE\n"
+			       + "5  - LOSE_ERROR_PACKET_MODE\n"
+	               + "6  - DELAY_RRQ_PACKET_MODE\n"
+			       + "7  - DELAY_WRQ_PACKET_MODE\n"
+	               + "8  - DELAY_DATA_PACKET_MODE\n"
+			       + "9  - DELAY_ACK_PACKET_MODE\n"
+	               + "10 - DELAY_ERROR_PACKET_MODE\n"
+			       + "11 - DUPLICATE_RRQ_PACKET_MODE\n"
+	               + "12 - DUPLICATE_WRQ_PACKET_MODE\n"
+			       + "13 - DUPLICATE_DATA_PACKET_MODE\n"
+	               + "14 - DUPLICATE_ACK_PACKET_MODE\n"
+			       + "15 - DUPLICATE_ERROR_PACKET_MODE\n";
+			
+			int userInput = getIntegerAsInput(prompt, 0, NetworkSimulationMode.values().length - 1);
+			networkSimMode = NetworkSimulationMode.values()[userInput];
+			
+			int netSM = networkSimMode.ordinal();
+			if(netSM != 0) {
+				if(netSM % 5 != 1 && netSM % 5 != 2) {
+					// get packet number
+					prompt = "Please select the packet number (1 and up):";
+					selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
+				}
+				
+				if(netSM > 5) {
+					// get amount to delay
+					prompt = "Please select the packet delay/duplication spacing:";
+					delayAmount = getIntegerAsInput(prompt, 1, -1);
+				}
+			}
+		}
+		
+		System.out.println("Packet Error Simulation:  using " + packetSimMode.toString());
+		System.out.println("Network Error Simulation: using " + networkSimMode.toString());
+		if(networkSimMode != NetworkSimulationMode.DEFAULT_MODE) {
+			System.out.println("Targeting packet number: " + selectedPacketNumber);
+		}
+		if(networkSimMode.ordinal() > 5) {
+			System.out.println("Amount of milliseconds to delay: " + delayAmount);
+		}
+	}
+	
+	private int getIntegerAsInput(String prompt, int startRange, int endRange) {
+		boolean isValid = false;
+		String input    = "";
+		int value       = -1;
+		
+		while(!isValid) {
+			System.out.println(prompt);
+			input = scanner.nextLine();
+
 			// assume input is valid, if not valid, loop again
 			isValid = true;
 			try {
@@ -445,135 +533,18 @@ public class ErrorSimulator {
 			}
 			
 			if(isValid) {
-				if(value < 0 || value > 2) {
-					isValid = false;
+				if(endRange != -1) {
+					if(value < startRange || value > endRange) {
+						isValid = false;
+					}
+				} else {
+					if(value < startRange) {
+						isValid = false;
+					}	
 				}
 			}
 		}
 		
-		isValid = false;
-		input   = "";
-		if(value == 0) { // DEFAULT
-			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
-			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
-		} else if(value == 1) { // PACKET ERRORS
-			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
-			
-			// select the Network Sim mode
-			while(!isValid) {
-				System.out.println("Please select a packet error simulation mode:");
-				System.out.println("0  - DEFAULT_MODE");
-				System.out.println("1  - CORRUPT_OPERATION_MODE");
-				System.out.println("2  - CORRUPT_DATA_BLOCK_NUM_MODE");
-				System.out.println("3  - REMOVE_BLOCK_NUM_MODE");
-				System.out.println("4  - CORRUPT_CLIENT_TRANSFER_ID_MODE");
-				System.out.println("5  - CORRUPT_SERVER_TRANSFER_ID_MODE");
-				System.out.println("6  - APPEND_PACKET_MODE");
-				System.out.println("7  - SHRINK_PACKET_MODE");
-				System.out.println("8  - CORRUPT_FILENAME_MODE");
-				System.out.println("9  - CORRUPT_TRANSFER_MODE");
-				System.out.println("10 - CORRUPT_FILENAME_DELIMITER_MODE");
-				System.out.println("11 - CORRUPT_TRANSFER_DELIMITER_MODE");
-				System.out.println("12 - REMOVE_FILENAME_MODE");
-				System.out.println("13 - REMOVE_TRANSFER_MODE");
-				System.out.println("14 - REMOVE_FILENAME_DELIMITER_MODE");
-				System.out.println("15 - REMOVE_TRANSFER_DELIMITER_MODE");
-				System.out.println("16 - CORRUPT_DATA_MODE");
-				System.out.println("17 - REMOVE_DATA_MODE");
-				System.out.println("18 - CORRUPT_ACK_BLOCK_NUM_MODE");
-				System.out.println("19 - GROW_DATA_EXCEED_SIZE_MODE");
-							
-				input = scanner.nextLine();
-
-				// assume input is valid, if not valid, loop again
-				isValid = true;
-				try {
-					value = Integer.parseInt(input);
-				} catch(NumberFormatException e) {
-					isValid = false;
-				}
-				
-				if(isValid) {
-					if(value < 0 || value > PacketSimulationMode.values().length - 1) {
-						isValid = false;
-					}
-				}
-			}
-			packetSimMode = PacketSimulationMode.values()[value];
-		} else if(value == 2) { // NETWORK ERRORS
-			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
-			while(!isValid) {
-				System.out.println("Please select a network error simulation mode:");
-				System.out.println("0  - DEFAULT_MODE");
-				
-				System.out.println("1  - LOSE_RRQ_PACKET_MODE");
-				System.out.println("2  - LOSE_WRQ_PACKET_MODE");
-				System.out.println("3  - LOSE_DATA_PACKET_MODE");
-				System.out.println("4  - LOSE_ACK_PACKET_MODE");
-				System.out.println("5  - LOSE_ERROR_PACKET_MODE");
-				
-				System.out.println("6  - DELAY_RRQ_PACKET_MODE");
-				System.out.println("7  - DELAY_WRQ_PACKET_MODE");
-				System.out.println("8  - DELAY_DATA_PACKET_MODE");
-				System.out.println("9  - DELAY_ACK_PACKET_MODE");
-				System.out.println("10 - DELAY_ERROR_PACKET_MODE");
-				
-				System.out.println("11 - DUPLICATE_RRQ_PACKET_MODE");
-				System.out.println("12 - DUPLICATE_WRQ_PACKET_MODE");
-				System.out.println("13 - DUPLICATE_DATA_PACKET_MODE");
-				System.out.println("14 - DUPLICATE_ACK_PACKET_MODE");
-				System.out.println("15 - DUPLICATE_ERROR_PACKET_MODE");
-							
-				input = scanner.nextLine();
-
-				// assume input is valid, if not valid, loop again
-				isValid = true;
-				try {
-					value = Integer.parseInt(input);
-				} catch(NumberFormatException e) {
-					isValid = false;
-				}
-				
-				if(isValid) {
-					if(value < 0 || value > NetworkSimulationMode.values().length - 1) {
-						isValid = false;
-					}
-				}
-			}
-			networkSimMode = NetworkSimulationMode.values()[value];
-			
-			// select which packet the Network Sim should target
-			int netSM = networkSimMode.ordinal();
-			if(netSM != 0 && netSM % 5 != 1 && netSM % 5 != 2) {
-				isValid = false;
-				input   = "";
-				
-				while(!isValid) {
-					System.out.println("Please select the packet number (1 and up):");
-					input = scanner.nextLine();
-	
-					// assume input is valid, if not valid, loop again
-					isValid = true;
-					try {
-						value = Integer.parseInt(input);
-					} catch(NumberFormatException e) {
-						isValid = false;
-					}
-					
-					if(isValid) {
-						if(value < 1) {
-							isValid = false;
-						}
-					}
-				}
-				selectedPacketNumber = value;
-			}
-		}
-		
-		System.out.println("Packet Error Simulation:  using " + packetSimMode.toString());
-		System.out.println("Network Error Simulation: using " + networkSimMode.toString());
-		if(networkSimMode != NetworkSimulationMode.DEFAULT_MODE) {
-			System.out.println("Targeting packet number: " + selectedPacketNumber);
-		}
+		return value;
 	}
 }
