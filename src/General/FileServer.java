@@ -63,7 +63,15 @@ public class FileServer {
 			
 			// wait for ACK packet
 			do {
+				// test for duplicate ACK here
+				//do {
 				packet = networkConnector.receive();
+					/*
+					if(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
+						System.out.println("Received and ignored duplicate ACK.");
+					}
+					*/
+				//} while(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber);
 				
 				if(expectedPort != packet.getPort()) {
 					// recover from ErrorCode 5

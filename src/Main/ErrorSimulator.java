@@ -30,6 +30,8 @@ public class ErrorSimulator {
 	private Scanner        scanner;
 	private PacketSimulationMode  packetSimMode;
 	private NetworkSimulationMode networkSimMode;
+	boolean sendNetErrorsToClient = false;
+	boolean sendNetErrorsToServer = false;
 	int     selectedPacketNumber = 1; // this is which packet the Network Error Sim will target (starts at 1).
 	int     delayAmount = 1000; // 3 milliseconds delay
 	
@@ -99,7 +101,45 @@ public class ErrorSimulator {
 					badConnector.send(sendPacket);
 					badConnector.receive();
 				}
+				handleSending(sendPacket);
+			}
+		}
+		
+		// includes network error handling
+		private void handleSending(DatagramPacket sendPacket) {
+			if(!sendNetErrorsToServer) {
+				// operate as usual
 				serverConnector.send(sendPacket);
+			} else {
+				// account for network errors
+				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
+				switch(networkSimMode) {
+					case DEFAULT_MODE:                { serverConnector.send(sendPacket); break; }
+					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   break; }
+					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   break; }
+					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  break; }
+					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   break; }
+					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) break; }
+					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   delay(); break; }
+					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   delay(); break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  delay(); break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   delay(); break; }
+					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) delay(); break; }
+					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { serverConnector.send(sendPacket); } serverConnector.send(sendPacket); break; }
+					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { serverConnector.send(sendPacket); } serverConnector.send(sendPacket); break; }
+					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { serverConnector.send(sendPacket); } serverConnector.send(sendPacket); break; }
+					case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { serverConnector.send(sendPacket); } serverConnector.send(sendPacket); break; }
+					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { serverConnector.send(sendPacket); } serverConnector.send(sendPacket); break; }
+					default: break;
+				}
+			}
+		}
+		
+		private void delay() {
+			try {
+				Thread.sleep(delayAmount);
+			} catch(Exception e) {
+				System.out.println(e);
 			}
 		}
 	}
@@ -119,7 +159,45 @@ public class ErrorSimulator {
 					badConnector.send(sendPacket);
 					badConnector.receive();
 				}
+				handleSending(sendPacket);
+			}
+		}
+		
+		// includes network error handling
+		private void handleSending(DatagramPacket sendPacket) {
+			if(!sendNetErrorsToClient) {
+				// operate as usual
 				clientConnector.send(sendPacket);
+			} else {
+				// account for network errors
+				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
+				switch(networkSimMode) {
+					case DEFAULT_MODE:                { clientConnector.send(sendPacket); break; }
+					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   break; }
+					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   break; }
+					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  break; }
+					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   break; }
+					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) break; }
+					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   delay(); break; }
+					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   delay(); break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  delay(); break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   delay(); break; }
+					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) delay(); break; }
+					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { clientConnector.send(sendPacket); } clientConnector.send(sendPacket); break; }
+					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { clientConnector.send(sendPacket); } clientConnector.send(sendPacket); break; }
+					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { clientConnector.send(sendPacket); } clientConnector.send(sendPacket); break; }
+					case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { clientConnector.send(sendPacket); } clientConnector.send(sendPacket); break; }
+					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { clientConnector.send(sendPacket); } clientConnector.send(sendPacket); break; }
+					default: break;
+				}
+			}
+		}
+		
+		private void delay() {
+			try {
+				Thread.sleep(delayAmount);
+			} catch(Exception e) {
+				System.out.println(e);
 			}
 		}
 	}
@@ -491,6 +569,24 @@ public class ErrorSimulator {
 			
 			int netSM = networkSimMode.ordinal();
 			if(netSM != 0) {
+				// select which direction error sim sends network errors (client, server, or both)
+				prompt = "Direct network errors to:\n"
+				       + "0 - The Client\n"
+				       + "1 - The Server\n"
+				       + "2 - The Client and Server";
+				userInput = getIntegerAsInput(prompt, 0, 2);
+				
+				if(userInput == 0) {
+					sendNetErrorsToClient = true;
+					sendNetErrorsToServer = false;
+				} else if(userInput == 1) {
+					sendNetErrorsToClient = false;
+					sendNetErrorsToServer = true;
+				} else {
+					sendNetErrorsToClient = true;
+					sendNetErrorsToServer = true;
+				}
+				
 				if(netSM % 5 != 1 && netSM % 5 != 2) {
 					// get packet number
 					prompt = "Please select the packet number (1 and up):";
