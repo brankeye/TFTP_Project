@@ -34,7 +34,7 @@ public class Client {
 	public Client() {
 		scanner = new Scanner(System.in);
 
-		networkConnector = new NetworkConnector(10000);
+		networkConnector = new NetworkConnector();
 		fileServer = new FileServer(networkConnector);
 
 		try {
