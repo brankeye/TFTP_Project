@@ -135,7 +135,6 @@ public class Server {
 					e.printStackTrace();
 					System.exit(1);
 				}
-				
 			} else { // Operation.WRQ
 				
 				FileOutputStream outputStream = null;
@@ -152,13 +151,17 @@ public class Server {
 						                                       datagramPacket.getAddress(), datagramPacket.getPort());
 				threadedNetworkConnector.send(sendPacket);
 				
-				fileServer.receive(outputStream, destAddress, destPort);
-
+				boolean successful = fileServer.receive(outputStream, destAddress, destPort);
+				
 				try {
 					outputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 					System.exit(1);
+				}
+				
+				if(!successful) {
+					file.delete();
 				}
 			}
 			

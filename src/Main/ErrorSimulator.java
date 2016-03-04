@@ -504,7 +504,6 @@ public class ErrorSimulator {
 		// this gets the simulation mode from the error sim user
 	private void simulationMode() {
 		String prompt = "";
-		int value    = -1;
 		
 		// PACKET ERRORS
 		prompt = "Please select a packet error simulation mode:\n"
