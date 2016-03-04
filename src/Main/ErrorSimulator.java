@@ -10,6 +10,8 @@ import General.NetworkConnector;
 import General.NetworkSimulationMode;
 import General.PacketSimulationMode;
 import NetworkTypes.Operation;
+import PacketParsers.AckPacketParser;
+import PacketParsers.DataPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -122,8 +124,8 @@ public class ErrorSimulator {
 					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
 					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
 					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); } break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); } break; }
 					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
 					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { serverConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { serverConnector.send(sendPacket); delay(); } break; }
@@ -143,14 +145,14 @@ public class ErrorSimulator {
 				System.out.println(e);
 			}
 		}
-		private void delay(int blockNum) {
-			//if (blocknum of packet == blockNum){
-			try {
-				Thread.sleep(delayAmount);
-			} catch(Exception e) {
-				System.out.println(e);
+		private void delay(int pcktNum) {
+			if (pcktNum == selectedPacketNumber){
+				try {
+					Thread.sleep(delayAmount);
+				} catch(Exception e) {
+					System.out.println(e);
+				}
 			}
-			//}
 		}
 	}
 	
@@ -190,8 +192,8 @@ public class ErrorSimulator {
 					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
 					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
 					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); } break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); } break; }
 					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
 					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { clientConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { clientConnector.send(sendPacket); delay(); } break; }
@@ -209,6 +211,15 @@ public class ErrorSimulator {
 				Thread.sleep(delayAmount);
 			} catch(Exception e) {
 				System.out.println(e);
+			}
+		}
+		private void delay(int pcktNum) {
+			if (pcktNum == selectedPacketNumber){
+				try {
+					Thread.sleep(delayAmount);
+				} catch(Exception e) {
+					System.out.println(e);
+				}
 			}
 		}
 	}
