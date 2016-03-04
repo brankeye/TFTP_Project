@@ -28,7 +28,7 @@ public class FileServer {
 		this.networkConnector = networkConnector;
 	}
 	
-	public void send(InputStream inputStream, InetAddress destAddress, int destPort) {
+	public boolean send(InputStream inputStream, InetAddress destAddress, int destPort) {
 
 		DatagramPacket packet = null;
 		boolean done          = false;
@@ -64,14 +64,14 @@ public class FileServer {
 			// wait for ACK packet
 			do {
 				// test for duplicate ACK here
-				//do {
-				packet = networkConnector.receive();
-					/*
+				do {
+					packet = networkConnector.receive();
+					
 					if(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
-						System.out.println("Received and ignored duplicate ACK.");
+						System.out.println("\nReceived and ignored duplicate ACK.");
 					}
-					*/
-				//} while(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber);
+					
+				} while(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber);
 				
 				if(expectedPort != packet.getPort()) {
 					// recover from ErrorCode 5
@@ -85,20 +85,21 @@ public class FileServer {
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 				System.out.println("Received ERROR packet. Transfer stopped.");
-				done = true;
+				return false;
 			} else if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid ACK packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
-				done = true;
+				return false;
 			}
 
-			blockNumber += 1;			
+			blockNumber += 1;	
 		}
+		return true;
 	}
 	
-	public void receive(OutputStream outputStream, InetAddress destAddress, int destPort) {
+	public boolean receive(OutputStream outputStream, InetAddress destAddress, int destPort) {
 		
 		DatagramPacket packet = null;
 		boolean done          = false;
@@ -126,13 +127,13 @@ public class FileServer {
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 				System.out.println("Received ERROR packet. Transfer stopped.");
-				return;
+				return false;
 			} else if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
 				System.out.println("Received invalid DATA packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
-				return;
+				return false;
 			}
 			
 			if (packet.getLength() > 3) {
@@ -165,6 +166,7 @@ public class FileServer {
 
 			blockNumber += 1;
 		}
+		return true;
 	}
 	
 	public void setExpectedHost(int p) {

@@ -48,7 +48,7 @@ public class Client {
 	}
 
 	// reads a server-hosted file and writes it locally
-	private int read(String filename) {
+	private boolean read(String filename) {
 
 		DatagramPacket packet = null;
 		byte[] rrqBuffer = RequestPacketParser.getByteArray(Operation.RRQ, filename);
@@ -57,15 +57,21 @@ public class Client {
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
 
+		File file = null;
 		try {
-			outputStream = new FileOutputStream(new File(RELPATH + filename));
+			file = new File(RELPATH + filename);
+			outputStream = new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
-			return 1;
+			try {
+				outputStream.close();
+			} catch(IOException ex) {}
+			file.delete();
+			return false;
 		}
 
 		// use fileServer to receive DATA/send ACKs
-		fileServer.receive(outputStream, destAddress, destPort);
+		boolean successful = fileServer.receive(outputStream, destAddress, destPort);
 
 		try {
 			outputStream.close();
@@ -73,8 +79,12 @@ public class Client {
 			e.printStackTrace();
 			System.exit(1);
 		}
+		
+		if(!successful) {
+			file.delete();
+		}
 
-		return 0;
+		return successful;
 	}
 
 	// reads a local file and writes it to server
@@ -84,10 +94,16 @@ public class Client {
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
 		
 		// open local file for reading
+		File file = null;
 		try {
-			inputStream = new FileInputStream(new File(RELPATH + filename));
+			file = new File(RELPATH + filename);
+			inputStream = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
+			try {
+				inputStream.close();
+			} catch(IOException ex) {}
+			file.delete();
 			return false;
 		}
 
@@ -100,12 +116,12 @@ public class Client {
 		fileServer.setExpectedHost(packet.getPort());
 		// add error checking on received ACK packet
 		
+		boolean successful = false;
 		if(AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
-			fileServer.send(inputStream, destAddress, destPort);
+			successful = fileServer.send(inputStream, destAddress, destPort);
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 			System.out.println("Received ERROR packet. Transfer stopped.");
-			return false;
 		} else {
 			System.out.println("Received invalid ACK packet. Transfer stopped.");
 			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
@@ -121,7 +137,7 @@ public class Client {
 			System.exit(1);
 		}
 		
-		return false;
+		return successful;
 	}
 
 	public static void main(String[] args) {

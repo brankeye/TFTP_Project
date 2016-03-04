@@ -368,8 +368,6 @@ public class ErrorSimulator {
 		}
 		return new DatagramPacket(data, data.length, address, port);
 	}
-		
-	
 	
 	// 10 Changes filename delimiter to 17 instead of 0
 	private DatagramPacket handleCorruptFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
@@ -506,100 +504,87 @@ public class ErrorSimulator {
 		// this gets the simulation mode from the error sim user
 	private void simulationMode() {
 		String prompt = "";
-		int value    = -1;
 		
-		// select the Packet Sim mode
-		prompt = "Please select an error testing operation:\n"
-			   + "0 - DEFAULT MODE\n"
-			   + "1 - PACKET ERRORS MODE\n"
-			   + "2 - NETWORK ERRORS MODE\n";
-		value = getIntegerAsInput(prompt, 0, 2);
+		// PACKET ERRORS
+		prompt = "Please select a packet error simulation mode:\n"
+			   + "0  - DEFAULT_MODE\n"
+			   + "1  - CORRUPT_OPERATION_MODE\n"
+			   + "2  - CORRUPT_DATA_BLOCK_NUM_MODE\n"
+			   + "3  - REMOVE_BLOCK_NUM_MODE\n"
+			   + "4  - CORRUPT_CLIENT_TRANSFER_ID_MODE\n"
+			   + "5  - CORRUPT_SERVER_TRANSFER_ID_MODE\n"
+			   + "6  - APPEND_PACKET_MODE\n"
+			   + "7  - SHRINK_PACKET_MODE\n"
+			   + "8  - CORRUPT_FILENAME_MODE\n"
+			   + "9  - CORRUPT_TRANSFER_MODE\n"
+			   + "10 - CORRUPT_FILENAME_DELIMITER_MODE\n"
+			   + "11 - CORRUPT_TRANSFER_DELIMITER_MODE\n"
+			   + "12 - REMOVE_FILENAME_MODE\n"
+			   + "13 - REMOVE_TRANSFER_MODE\n"
+			   + "14 - REMOVE_FILENAME_DELIMITER_MODE\n"
+			   + "15 - REMOVE_TRANSFER_DELIMITER_MODE\n"
+			   + "16 - CORRUPT_DATA_MODE\n"
+			   + "17 - REMOVE_DATA_MODE\n"
+			   + "18 - CORRUPT_ACK_BLOCK_NUM_MODE\n"
+			   + "19 - GROW_DATA_EXCEED_SIZE_MODE\n";
 		
-		if(value == 0) { // DEFAULT
-			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
-			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
-		} else if(value == 1) { // PACKET ERRORS
-			networkSimMode = NetworkSimulationMode.DEFAULT_MODE;
+		int userInput = getIntegerAsInput(prompt, 0, PacketSimulationMode.values().length - 1);
+		packetSimMode = PacketSimulationMode.values()[userInput];
+		System.out.println("Selected " + packetSimMode.toString() + "\n");
+
+		// NETWORK ERRORS
+		prompt = "Please select a network error simulation mode:\n"
+		       + "0  - DEFAULT_MODE\n"
+		       + "1  - LOSE_RRQ_PACKET_MODE\n"
+               + "2  - LOSE_WRQ_PACKET_MODE\n"
+		       + "3  - LOSE_DATA_PACKET_MODE\n"
+               + "4  - LOSE_ACK_PACKET_MODE\n"
+		       + "5  - LOSE_ERROR_PACKET_MODE\n"
+               + "6  - DELAY_RRQ_PACKET_MODE\n"
+		       + "7  - DELAY_WRQ_PACKET_MODE\n"
+               + "8  - DELAY_DATA_PACKET_MODE\n"
+		       + "9  - DELAY_ACK_PACKET_MODE\n"
+               + "10 - DELAY_ERROR_PACKET_MODE\n"
+		       + "11 - DUPLICATE_RRQ_PACKET_MODE\n"
+               + "12 - DUPLICATE_WRQ_PACKET_MODE\n"
+		       + "13 - DUPLICATE_DATA_PACKET_MODE\n"
+               + "14 - DUPLICATE_ACK_PACKET_MODE\n"
+		       + "15 - DUPLICATE_ERROR_PACKET_MODE\n";
+		
+		userInput = getIntegerAsInput(prompt, 0, NetworkSimulationMode.values().length - 1);
+		networkSimMode = NetworkSimulationMode.values()[userInput];
+		System.out.println("Selected " + networkSimMode.toString() + "\n");
+		
+		int netInt = networkSimMode.ordinal();
+		if(netInt != 0) {
+			// select which direction error sim sends network errors (client, server, or both)
+			prompt = "Direct network errors to:\n"
+			       + "0 - The Client\n"
+			       + "1 - The Server\n"
+			       + "2 - The Client and Server";
+			userInput = getIntegerAsInput(prompt, 0, 2);
 			
-			// select the Network Sim mode
-			prompt = "Please select a packet error simulation mode:\n"
-				   + "0  - DEFAULT_MODE\n"
-				   + "1  - CORRUPT_OPERATION_MODE\n"
-				   + "2  - CORRUPT_DATA_BLOCK_NUM_MODE\n"
-				   + "3  - REMOVE_BLOCK_NUM_MODE\n"
-				   + "4  - CORRUPT_CLIENT_TRANSFER_ID_MODE\n"
-				   + "5  - CORRUPT_SERVER_TRANSFER_ID_MODE\n"
-				   + "6  - APPEND_PACKET_MODE\n"
-				   + "7  - SHRINK_PACKET_MODE\n"
-				   + "8  - CORRUPT_FILENAME_MODE\n"
-				   + "9  - CORRUPT_TRANSFER_MODE\n"
-				   + "10 - CORRUPT_FILENAME_DELIMITER_MODE\n"
-				   + "11 - CORRUPT_TRANSFER_DELIMITER_MODE\n"
-				   + "12 - REMOVE_FILENAME_MODE\n"
-				   + "13 - REMOVE_TRANSFER_MODE\n"
-				   + "14 - REMOVE_FILENAME_DELIMITER_MODE\n"
-				   + "15 - REMOVE_TRANSFER_DELIMITER_MODE\n"
-				   + "16 - CORRUPT_DATA_MODE\n"
-				   + "17 - REMOVE_DATA_MODE\n"
-				   + "18 - CORRUPT_ACK_BLOCK_NUM_MODE\n"
-				   + "19 - GROW_DATA_EXCEED_SIZE_MODE\n";
+			if(userInput == 0) {
+				sendNetErrorsToClient = true;
+				sendNetErrorsToServer = false;
+			} else if(userInput == 1) {
+				sendNetErrorsToClient = false;
+				sendNetErrorsToServer = true;
+			} else {
+				sendNetErrorsToClient = true;
+				sendNetErrorsToServer = true;
+			}
 			
-			int userInput = getIntegerAsInput(prompt, 0, PacketSimulationMode.values().length - 1);
-			packetSimMode = PacketSimulationMode.values()[userInput];
-		} else if(value == 2) { // NETWORK ERRORS
-			packetSimMode = PacketSimulationMode.DEFAULT_MODE;
-			prompt = "Please select a network error simulation mode:\n"
-			       + "0  - DEFAULT_MODE\n"
-			       + "1  - LOSE_RRQ_PACKET_MODE\n"
-	               + "2  - LOSE_WRQ_PACKET_MODE\n"
-			       + "3  - LOSE_DATA_PACKET_MODE\n"
-	               + "4  - LOSE_ACK_PACKET_MODE\n"
-			       + "5  - LOSE_ERROR_PACKET_MODE\n"
-	               + "6  - DELAY_RRQ_PACKET_MODE\n"
-			       + "7  - DELAY_WRQ_PACKET_MODE\n"
-	               + "8  - DELAY_DATA_PACKET_MODE\n"
-			       + "9  - DELAY_ACK_PACKET_MODE\n"
-	               + "10 - DELAY_ERROR_PACKET_MODE\n"
-			       + "11 - DUPLICATE_RRQ_PACKET_MODE\n"
-	               + "12 - DUPLICATE_WRQ_PACKET_MODE\n"
-			       + "13 - DUPLICATE_DATA_PACKET_MODE\n"
-	               + "14 - DUPLICATE_ACK_PACKET_MODE\n"
-			       + "15 - DUPLICATE_ERROR_PACKET_MODE\n";
+			if(netInt % 5 != 1 && netInt % 5 != 2) {
+				// get packet number
+				prompt = "Please select the packet number (1 and up):";
+				selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
+			}
 			
-			int userInput = getIntegerAsInput(prompt, 0, NetworkSimulationMode.values().length - 1);
-			networkSimMode = NetworkSimulationMode.values()[userInput];
-			
-			int netSM = networkSimMode.ordinal();
-			if(netSM != 0) {
-				// select which direction error sim sends network errors (client, server, or both)
-				prompt = "Direct network errors to:\n"
-				       + "0 - The Client\n"
-				       + "1 - The Server\n"
-				       + "2 - The Client and Server";
-				userInput = getIntegerAsInput(prompt, 0, 2);
-				
-				if(userInput == 0) {
-					sendNetErrorsToClient = true;
-					sendNetErrorsToServer = false;
-				} else if(userInput == 1) {
-					sendNetErrorsToClient = false;
-					sendNetErrorsToServer = true;
-				} else {
-					sendNetErrorsToClient = true;
-					sendNetErrorsToServer = true;
-				}
-				
-				if(netSM % 5 != 1 && netSM % 5 != 2) {
-					// get packet number
-					prompt = "Please select the packet number (1 and up):";
-					selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
-				}
-				
-				if(netSM > 5) {
-					// get amount to delay
-					prompt = "Please select the packet delay/duplication spacing:";
-					delayAmount = getIntegerAsInput(prompt, 1, -1);
-				}
+			if(netInt > 5) {
+				// get amount to delay
+				prompt = "Please select the packet delay/duplication spacing (ms):";
+				delayAmount = getIntegerAsInput(prompt, 1, -1);
 			}
 		}
 		
