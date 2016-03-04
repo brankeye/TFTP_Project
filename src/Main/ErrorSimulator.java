@@ -143,6 +143,15 @@ public class ErrorSimulator {
 				System.out.println(e);
 			}
 		}
+		private void delay(int blockNum) {
+			//if (blocknum of packet == blockNum){
+			try {
+				Thread.sleep(delayAmount);
+			} catch(Exception e) {
+				System.out.println(e);
+			}
+			//}
+		}
 	}
 	
 	private class ServerLink implements Runnable {
