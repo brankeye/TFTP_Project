@@ -45,10 +45,10 @@ public class ErrorSimulator {
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
 
-		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, 0);
-		serverConnector  = new NetworkConnector(0);
+		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false);
+		serverConnector  = new NetworkConnector();
 		scanner          = new Scanner(System.in);
-		badConnector     = new NetworkConnector(0);
+		badConnector     = new NetworkConnector();
 
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);
@@ -142,15 +142,6 @@ public class ErrorSimulator {
 			} catch(Exception e) {
 				System.out.println(e);
 			}
-		}
-		private void delay(int blockNum) {
-			//if (blocknum of packet == blockNum){
-			try {
-				Thread.sleep(delayAmount);
-			} catch(Exception e) {
-				System.out.println(e);
-			}
-			//}
 		}
 	}
 	
