@@ -29,7 +29,7 @@ public class NetworkConnector {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		try {
-			System.out.print("\nWaiting to receive a packet... ");
+			System.out.print("\nWaiting to receive a packet...\n");
 			socket.receive(receivePacket);
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely ");

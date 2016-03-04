@@ -368,8 +368,6 @@ public class ErrorSimulator {
 		}
 		return new DatagramPacket(data, data.length, address, port);
 	}
-		
-	
 	
 	// 10 Changes filename delimiter to 17 instead of 0
 	private DatagramPacket handleCorruptFilenameDelimiterMode(DatagramPacket simPacket, InetAddress address, int port) {
@@ -586,7 +584,7 @@ public class ErrorSimulator {
 			
 			if(netInt > 5) {
 				// get amount to delay
-				prompt = "Please select the packet delay/duplication spacing:";
+				prompt = "Please select the packet delay/duplication spacing (ms):";
 				delayAmount = getIntegerAsInput(prompt, 1, -1);
 			}
 		}
