@@ -27,7 +27,7 @@ public class Server {
 
 	// may or may not need this, will look further into this
 	public Server() {
-		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, 0);
+		networkConnector = new NetworkConnector(Config.SERVER_PORT, true);
 		shutdownHandler  = new ShutdownHandler();
 		
 	}
@@ -79,7 +79,7 @@ public class Server {
 		FileServer       fileServer;
 		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket           = receivedPacket;
-			threadedNetworkConnector = new NetworkConnector(10000);
+			threadedNetworkConnector = new NetworkConnector();
 			fileServer               = new FileServer(threadedNetworkConnector);
 			fileServer.setExpectedHost(datagramPacket.getPort());
 		}
