@@ -40,7 +40,6 @@ public class Server {
 	// sends and receives messages
 	public void sendReceive() {
 		while (!networkConnector.isClosed()) {
-			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
 			DatagramPacket datagramPacket = networkConnector.receive();
 			byte[] data = datagramPacket.getData();
