@@ -9,22 +9,24 @@ import java.net.*;
  */
 
 public class NetworkConnector {
-	
+	private DatagramPacket lastPacketSent;
 	private DatagramSocket socket;
 	private boolean        tempSendSocket; // if true, the sending socket will be closed after
 	private PacketReader   packetReader = new PacketReader("");;
-	
-	public NetworkConnector() {
+	private int timeout;
+	public NetworkConnector(int timeout) {
+		this.timeout = timeout;
 		initializeSocket();
 		this.tempSendSocket = false;
 	}
 	
-	public NetworkConnector(int receivingPort, boolean tempSendSocket) {
+	public NetworkConnector(int receivingPort, boolean tempSendSocket, int timeout) {
+		this.timeout = timeout;
 		initializeSocket(receivingPort);
 		this.tempSendSocket = tempSendSocket;
 	}
 	
-	// TODO: test if this actually returns a packet sucessfully
+	// TODO: test if this actually returns a packet successfully
 	public DatagramPacket receive() {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
@@ -32,8 +34,7 @@ public class NetworkConnector {
 			System.out.print("\nWaiting to receive a packet...\n");
 			socket.receive(receivePacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely ");
-			System.out.println("Receive Socket Timed Out.\n" + e);
+			System.out.print("Timeout. Retransmitting...");
 		}
 		
 		packetReader.readReceivePacket(receivePacket);
@@ -51,7 +52,7 @@ public class NetworkConnector {
 				// if the sending socket must stay open to receive after, use the existing socket
 				socket.send(sendPacket);
 			}
-			
+			lastPacketSent = sendPacket;
 		} catch (SocketException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -72,6 +73,7 @@ public class NetworkConnector {
 	private void initializeSocket() {
 		try {
 	       socket = new DatagramSocket();
+	       socket.setSoTimeout(timeout);
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
@@ -81,6 +83,7 @@ public class NetworkConnector {
 	private void initializeSocket(int receivingPort) {
 		try {
 	       socket = new DatagramSocket(receivingPort);
+	       socket.setSoTimeout(timeout);
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
