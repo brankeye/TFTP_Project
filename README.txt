@@ -89,3 +89,10 @@ Jason:   Diagrams, README
 Mazhar:  Corrupter functions 9-17 in ErrorSimulator, extensive test menu in ErrorSimulator
 Aaron:   Client/Server system printing standardization, file/IO class for the Client/Server
 Remy:    Modify PacketParser functions to take in the byte array length, Implement the ErrorPacketParser
+
+Iteration 3
+Brandon: Handling duplicated packets
+Jason:   Handling delayed and lost packets, README
+Mazhar:  Diagrams
+Aaron:   ???
+Remy:    ???
