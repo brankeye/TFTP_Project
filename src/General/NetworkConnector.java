@@ -14,18 +14,18 @@ public class NetworkConnector {
 	private boolean        tempSendSocket; // if true, the sending socket will be closed after
 	private PacketReader   packetReader = new PacketReader("");;
 	
-	public NetworkConnector() {
-		initializeSocket();
+	public NetworkConnector(boolean shouldTimeout) {
+		initializeSocket(shouldTimeout);
 		this.tempSendSocket = false;
 	}
 	
-	public NetworkConnector(int receivingPort, boolean tempSendSocket) {
-		initializeSocket(receivingPort);
+	public NetworkConnector(int receivingPort, boolean tempSendSocket, boolean shouldTimeout) {
+		initializeSocket(receivingPort, shouldTimeout);
 		this.tempSendSocket = tempSendSocket;
 	}
 	
-	// TODO: test if this actually returns a packet sucessfully
-	public DatagramPacket receive() {
+	// TODO: test if this actually returns a packet successfully
+	public DatagramPacket receive() throws SocketTimeoutException {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		try {
@@ -34,6 +34,7 @@ public class NetworkConnector {
 		} catch (IOException e) {
 			System.out.print("IO Exception: likely ");
 			System.out.println("Receive Socket Timed Out.\n" + e);
+			throw new SocketTimeoutException();
 		}
 		
 		packetReader.readReceivePacket(receivePacket);
@@ -69,21 +70,38 @@ public class NetworkConnector {
 	
 	public boolean isClosed() { return socket.isClosed(); }
 	
-	private void initializeSocket() {
+	private void enableTimeout() {
+		try {
+			socket.setSoTimeout(Config.MAX_TIMEOUT);
+		} catch (SocketException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
+	private void initializeSocket(boolean shouldTimeout) {
 		try {
 	       socket = new DatagramSocket();
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
 	    }
+		
+		if (shouldTimeout) {
+			enableTimeout();
+		}
 	}
 	
-	private void initializeSocket(int receivingPort) {
+	private void initializeSocket(int receivingPort, boolean shouldTimeout) {
 		try {
 	       socket = new DatagramSocket(receivingPort);
 	    } catch (SocketException se) {   // Can't create the socket.
 	       se.printStackTrace();
 	       System.exit(1);
 	    }
+		
+		if (shouldTimeout) {
+			enableTimeout();
+		}
 	}
 }

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 
 import NetworkTypes.ErrorCode;
 import NetworkTypes.Operation;
@@ -65,7 +66,13 @@ public class FileServer {
 			do {
 				// test for duplicate ACK here
 				do {
-					packet = networkConnector.receive();
+					try {
+						packet = networkConnector.receive();
+					} catch (SocketTimeoutException e) {
+						System.out.println("Fileserver receive ACK timed out");
+						e.printStackTrace();
+						System.exit(1);
+					}
 					
 					if(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
 						System.out.println("\nReceived and ignored duplicate ACK.");
@@ -109,7 +116,13 @@ public class FileServer {
 			
 			// wait for DATA packet and validate
 			do {
-				packet = networkConnector.receive();
+				try {
+					packet = networkConnector.receive();
+				} catch (SocketTimeoutException e) {
+					System.out.println("FileServer receive DATA timed out");
+					e.printStackTrace();
+					System.exit(1);
+				}
 				
 				if(expectedPort == -1) {
 					setExpectedHost(packet.getPort());

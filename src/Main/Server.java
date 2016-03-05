@@ -28,7 +28,7 @@ public class Server {
 
 	// may or may not need this, will look further into this
 	public Server() {
-		networkConnector = new NetworkConnector(Config.SERVER_PORT, true);
+		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, false);
 		shutdownHandler  = new ShutdownHandler();
 		
 	}
@@ -43,7 +43,15 @@ public class Server {
 		while (isRunning) {
 			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
-			DatagramPacket datagramPacket = networkConnector.receive();
+			DatagramPacket datagramPacket = null;
+			try {
+				datagramPacket = networkConnector.receive();
+			} catch (SocketTimeoutException e) {
+				System.out.println("Server main thread timed out");
+				e.printStackTrace();
+				System.exit(1);
+			}
+			
 			byte[] data = datagramPacket.getData();
 			
 			// when the isValid function evaluates an empty/incorrect data array, it prints out Invalid Data: Opcode should be 1 or 2
@@ -80,7 +88,7 @@ public class Server {
 		FileServer       fileServer;
 		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket           = receivedPacket;
-			threadedNetworkConnector = new NetworkConnector();
+			threadedNetworkConnector = new NetworkConnector(true);
 			fileServer               = new FileServer(threadedNetworkConnector);
 			fileServer.setExpectedHost(datagramPacket.getPort());
 		}

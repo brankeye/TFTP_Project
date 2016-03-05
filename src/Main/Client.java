@@ -34,7 +34,7 @@ public class Client {
 	public Client() {
 		scanner = new Scanner(System.in);
 
-		networkConnector = new NetworkConnector();
+		networkConnector = new NetworkConnector(true);
 		fileServer = new FileServer(networkConnector);
 
 		try {
@@ -112,7 +112,14 @@ public class Client {
 		networkConnector.send(packet);
 				
 		// wait for ACK packet and validate packet
-		packet = networkConnector.receive();
+		try {
+			packet = networkConnector.receive();
+		} catch (SocketTimeoutException e1) {
+			System.out.println("Client WRQ timed out");
+			e1.printStackTrace();
+			System.exit(1);
+		}
+		
 		fileServer.setExpectedHost(packet.getPort());
 		// add error checking on received ACK packet
 		

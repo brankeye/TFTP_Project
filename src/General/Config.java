@@ -11,4 +11,5 @@ public class Config {
 	public static int          MAX_BYTE_ARR_SIZE = 516;
 	public static int          MAX_PAYLOAD_SIZE  = 512;
 	public static int          MAX_PRINT_SIZE    = 32;
+	public static int          MAX_TIMEOUT       = 2000;
 }

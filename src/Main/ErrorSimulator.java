@@ -2,6 +2,7 @@ package Main;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
@@ -45,10 +46,10 @@ public class ErrorSimulator {
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
 
-		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false);
-		serverConnector  = new NetworkConnector();
+		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, false);
+		serverConnector  = new NetworkConnector(false);
 		scanner          = new Scanner(System.in);
-		badConnector     = new NetworkConnector();
+		badConnector     = new NetworkConnector(false);
 
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);
@@ -87,7 +88,14 @@ public class ErrorSimulator {
 		public void run() {
 			while(true) {
 				//Receive packet from client
-				DatagramPacket dpClient = clientConnector.receive();
+				DatagramPacket dpClient = null;
+				try {
+					dpClient = clientConnector.receive();
+				} catch (SocketTimeoutException e) {
+					System.out.println("ErrorSimulator ClientLink timed out");
+					e.printStackTrace();
+					System.exit(1);
+				}
 				clientAddress = dpClient.getAddress();
 				clientPort    = dpClient.getPort();
 				
@@ -100,7 +108,13 @@ public class ErrorSimulator {
 				}
 				if(packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
 					badConnector.send(sendPacket);
-					badConnector.receive();
+					try {
+						badConnector.receive();
+					} catch (SocketTimeoutException e) {
+						System.out.println("ErrorSimulator ClientLink badConnector timed out");
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 				handleSending(sendPacket);
 			}
@@ -152,14 +166,27 @@ public class ErrorSimulator {
 		public void run() {
 			while(true) {
 				//Receive packet from server
-				DatagramPacket dpServer = serverConnector.receive();
+				DatagramPacket dpServer = null;
+				try {
+					dpServer = serverConnector.receive();
+				} catch (SocketTimeoutException e) {
+					System.out.println("ErrorSimulator ServerLink timed out");
+					e.printStackTrace();
+					System.exit(1);
+				}
 				threadAddress = dpServer.getAddress();
 				threadPort    = dpServer.getPort();
 				
 				DatagramPacket sendPacket = handleSimulationModes(dpServer, clientAddress, clientPort);
 				if(packetSimMode == PacketSimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
 					badConnector.send(sendPacket);
-					badConnector.receive();
+					try {
+						badConnector.receive();
+					} catch (SocketTimeoutException e) {
+						System.out.println("ErrorSimulator ServerLink badConnector timed out");
+						e.printStackTrace();
+						System.exit(1);
+					}
 				}
 				handleSending(sendPacket);
 			}
