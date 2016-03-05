@@ -162,6 +162,7 @@ public class ErrorSimulator {
 					default: break;
 					}
 				}
+				serverConnector.send(sendPacket); 
 			}
 		}
 		
@@ -251,6 +252,7 @@ public class ErrorSimulator {
 					default: break;
 					}
 				}
+				clientConnector.send(sendPacket); 
 			}
 		}
 		
