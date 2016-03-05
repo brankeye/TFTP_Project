@@ -141,7 +141,7 @@ public class FileServer {
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 				System.out.println("Received ERROR packet. Transfer stopped.");
 				return false;
-			} else if (!DataPacketParser.isValid(packet.getData(), blockNumber)) {
+			} else if (!DataPacketParser.isValid(packet.getData())) {
 				System.out.println("Received invalid DATA packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
@@ -149,7 +149,12 @@ public class FileServer {
 				return false;
 			}
 			
-			if (packet.getLength() > 3) {
+			boolean duplicateDataPacket = false;
+			if(DataPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
+				duplicateDataPacket = true;
+				blockNumber--;
+			}
+			if (!duplicateDataPacket && packet.getLength() > 3) {
 				try {
 					outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
 	 			} catch (IOException e) {
@@ -173,16 +178,12 @@ public class FileServer {
 			
 			networkConnector.send(packet);
 			
-			if (!done) {
-				
-			}
-
-			blockNumber += 1;
+			blockNumber += 1;		
 		}
 		return true;
 	}
 	
 	public void setExpectedHost(int p) {
-		expectedPort    = p;
+		expectedPort = p;
 	}
 }

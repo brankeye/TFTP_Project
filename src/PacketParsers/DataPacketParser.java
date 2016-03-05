@@ -54,6 +54,17 @@ public class DataPacketParser extends PacketParser {
 		
 		return true;
 	}
+	
+	public static boolean isValid(byte[] data) {
+		
+		int actualBlockNumber = ((data[2] & 0xff) << 8) + (data[3] & 0xff);
+		
+		if (data[0] != 0) return false;
+		if (data[1] != Operation.DATA.ordinal()) return false;
+		if (actualBlockNumber <= 0) return false;
+		
+		return true;
+	}
 
 	/**
 	 * Parses the byte array from a data DatagramPacket for the block number as

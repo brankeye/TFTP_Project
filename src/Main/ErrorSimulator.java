@@ -11,6 +11,8 @@ import General.NetworkConnector;
 import General.NetworkSimulationMode;
 import General.PacketSimulationMode;
 import NetworkTypes.Operation;
+import PacketParsers.AckPacketParser;
+import PacketParsers.DataPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
@@ -33,7 +35,7 @@ public class ErrorSimulator {
 	private NetworkSimulationMode networkSimMode;
 	boolean sendNetErrorsToClient = false;
 	boolean sendNetErrorsToServer = false;
-	int     selectedPacketNumber = 1; // this is which packet the Network Error Sim will target (starts at 1).
+	int     selectedPacketNumber = -1; // this is which packet the Network Error Sim will target (is the block number, if -1 is every packet)
 	int     delayAmount = 1000; // 3 milliseconds delay
 	
 	InetAddress clientAddress = null;
@@ -128,24 +130,32 @@ public class ErrorSimulator {
 			} else {
 				// account for network errors
 				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
-				switch(networkSimMode) {
-					case DEFAULT_MODE:                { serverConnector.send(sendPacket); break; }
-					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
-					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
-					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
-					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
-					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
-					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
-					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
-					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
-					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { serverConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { serverConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { serverConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { serverConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { serverConnector.send(sendPacket); delay(); } break; }
-					default: break;
+				int blocknum = -1;
+				if(opcode == Operation.DATA) {
+					blocknum = DataPacketParser.getBlockNumber(sendPacket.getData());
+				} else if(opcode == Operation.ACK) {
+					blocknum = AckPacketParser.getBlockNumber(sendPacket.getData());
+				}
+				if(selectedPacketNumber == -1 || selectedPacketNumber == blocknum) {
+					switch(networkSimMode) {
+						case DEFAULT_MODE:                { serverConnector.send(sendPacket); break; }
+						case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
+						case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
+						case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
+						case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
+						case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
+						case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
+						case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
+						case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
+						case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
+						case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
+						case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { serverConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { serverConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { serverConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { serverConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { serverConnector.send(sendPacket); delay(); } break; }
+						default: break;
+					}
 				}
 				serverConnector.send(sendPacket);
 			}
@@ -200,24 +210,32 @@ public class ErrorSimulator {
 			} else {
 				// account for network errors
 				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
-				switch(networkSimMode) {
-					case DEFAULT_MODE:                { clientConnector.send(sendPacket); break; }
-					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
-					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
-					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
-					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
-					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
-					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
-					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
-					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
-					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { clientConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { clientConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { clientConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { clientConnector.send(sendPacket); delay(); } break; }
-					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { clientConnector.send(sendPacket); delay(); } break; }
-					default: break;
+				int blocknum = -1;
+				if(opcode == Operation.DATA) {
+					blocknum = DataPacketParser.getBlockNumber(sendPacket.getData());
+				} else if(opcode == Operation.ACK) {
+					blocknum = AckPacketParser.getBlockNumber(sendPacket.getData());
+				}
+				if(selectedPacketNumber == -1 || selectedPacketNumber == blocknum) {
+					switch(networkSimMode) {
+						case DEFAULT_MODE:                { clientConnector.send(sendPacket); break; }
+						case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
+						case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
+						case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
+						case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
+						case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
+						case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
+						case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
+						case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); } break; }
+						case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); } break; }
+						case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
+						case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { clientConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { clientConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { clientConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { clientConnector.send(sendPacket); delay(); } break; }
+						case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { clientConnector.send(sendPacket); delay(); } break; }
+						default: break;
+					}
 				}
 				clientConnector.send(sendPacket);
 			}
@@ -603,16 +621,17 @@ public class ErrorSimulator {
 				sendNetErrorsToServer = true;
 			}
 			
-			if(netInt % 5 != 1 && netInt % 5 != 2) {
+			// cannot be RRQ/WRQ/ERROR, they have a default packet targeting system
+			if(netInt % 5 != 1 && netInt % 5 != 2 && netInt % 5 != 0) {
 				// get packet number
-				prompt = "Please select the packet number (1 and up):";
-				selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
+				prompt = "Please select the block number to target (0 and up):";
+				selectedPacketNumber = getIntegerAsInput(prompt, 0, -1);
 			}
 			
 			if(netInt > 5) {
 				// get amount to delay
 				prompt = "Please select the packet delay/duplication spacing (ms):";
-				delayAmount = getIntegerAsInput(prompt, 1, -1);
+				delayAmount = getIntegerAsInput(prompt, 0, -1);
 			}
 		}
 		
