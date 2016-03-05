@@ -1,6 +1,6 @@
-# TFTP
+# TFTP File Transfer System
 
-Implementation the Trivial File Transfer Protocol in Java, created for the Winter 2016 offering of SYSC3303 at Carleton University. Hosted at (
+Implementation the Trivial File Transfer Protocol in Java, created for the Winter 2016 offering of SYSC3303 at Carleton University.
 
 ## Setup
 ------
@@ -15,28 +15,53 @@ Import the project folder into Eclipse, and run the Server.java, followed by Err
 ### Error Simulation
 
 
-Below are numerical values corresponding to different forms of error simulation that can be found in the ErrorSimulator class. 
+Below are numerical values corresponding to different forms of error simulation that can be found in the ErrorSimulator class.  
+The ErrorSimulator will prompt for one on start.
 
 ```
- 0 - DEFAULT_MODE("Default"),  
- 1 - CORRUPT_OPERATION_MODE("Corrupt Operation"),  
- 2 - CORRUPT_BLOCK_NUM_MODE("Corrupt Block Number"),  
- 3 - REMOVE_BLOCK_NUM_MODE("Remove Block Number"),  
- 4 - CORRUPT_CLIENT_TRANSFER_ID_MODE("Corrupt Client Transfer ID"),  
- 5 - CORRUPT_SERVER_TRANSFER_ID_MODE("Corrupt Server Transfer ID"),  
- 6 - APPEND_PACKET_MODE("Append Packet Mode"),  
- 7 - SHRINK_PACKET_MODE("Append Packet Mode"),  
- 8 - CORRUPT_FILENAME_MODE("Corrupt Filename"),  
- 9 - CORRUPT_TRANSFER_MODE("Corrupt Transfer"),  
-10 - CORRUPT_FILENAME_DELIMITER_MODE("Corrupt Filename Delimiter"),  
-11 - CORRUPT_TRANSFER_DELIMITER_MODE("Corrupt Transfer Delimiter"),  
-12 - REMOVE_FILENAME_MODE("Remove Filename"),  
-13 - REMOVE_TRANSFER_MODE("Remove Transfer"),  
-14 - REMOVE_FILENAME_DELIMITER_MODE("Remove Filename Delimiter"),  
-15 - REMOVE_TRANSFER_DELIMITER_MODE("Remove Transfer Delimiter"),  
-16 - CORRUPT_DATA_MODE("Corrupt Data"),  
-17 - REMOVE_DATA_MODE("Remove Data");  
+ 0 - DEFAULT_MODE("Default")  
+ 1 - CORRUPT_OPERATION_MODE("Corrupt Operation")  
+ 2 - CORRUPT_DATA_BLOCK_NUM_MODE("Corrupt Block Number")  
+ 3 - REMOVE_BLOCK_NUM_MODE("Remove Block Number")  
+ 4 - CORRUPT_CLIENT_TRANSFER_ID_MODE("Corrupt Client Transfer ID")  
+ 5 - CORRUPT_SERVER_TRANSFER_ID_MODE("Corrupt Server Transfer ID")   
+ 6 - APPEND_PACKET_MODE("Append Packet Mode")   
+ 7 - SHRINK_PACKET_MODE("Append Packet Mode")    
+ 8 - CORRUPT_FILENAME_MODE("Corrupt Filename")    
+ 9 - CORRUPT_TRANSFER_MODE("Corrupt Transfer")   
+10 - CORRUPT_FILENAME_DELIMITER_MODE("Corrupt Filename Delimiter")    
+11 - CORRUPT_TRANSFER_DELIMITER_MODE("Corrupt Transfer Delimiter")  
+12 - REMOVE_FILENAME_MODE("Remove Filename")   
+13 - REMOVE_TRANSFER_MODE("Remove Transfer")  
+14 - REMOVE_FILENAME_DELIMITER_MODE("Remove Filename Delimiter")   
+15 - REMOVE_TRANSFER_DELIMITER_MODE("Remove Transfer Delimiter")   
+16 - CORRUPT_DATA_MODE("Corrupt Data")  
+17 - REMOVE_DATA_MODE("Remove Data")  
+18 - CORRUPT_ACK_BLOCK_NUM_MODE("Corrupt Ack Block Num")    
+19 - GROW_DATA_EXCEED_SIZE_MODE("Grow Data Exceed Size")
 ```
+
+It will also prompt for a Network Simulation mode, which are listed below.
+
+```
+0  - DEFAULT_MODE  
+1  - LOSE_RRQ_PACKET_MODE  
+2  - LOSE_WRQ_PACKET_MODE  
+3  - LOSE_DATA_PACKET_MODE  
+4  - LOSE_ACK_PACKET_MODE  
+5  - LOSE_ERROR_PACKET_MODE  
+6  - DELAY_RRQ_PACKET_MODE  
+7  - DELAY_WRQ_PACKET_MODE  
+8  - DELAY_DATA_PACKET_MODE  
+9  - DELAY_ACK_PACKET_MODE  
+10 - DELAY_ERROR_PACKET_MODE  
+11 - DUPLICATE_RRQ_PACKET_MODE  
+12 - DUPLICATE_WRQ_PACKET_MODE  
+13 - DUPLICATE_DATA_PACKET_MODE  
+14 - DUPLICATE_ACK_PACKET_MODE  
+15 - DUPLICATE_ERROR_PACKET_MODE  
+```
+
 ### Shutdown
 
 Typing 'shutdown' into the Server class' console will terminate it after all current transfers have completed it.
