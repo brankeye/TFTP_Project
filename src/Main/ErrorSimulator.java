@@ -91,8 +91,9 @@ public class ErrorSimulator {
 				clientAddress = dpClient.getAddress();
 				clientPort    = dpClient.getPort();
 				
+				Operation opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
 				DatagramPacket sendPacket;
-				if(threadAddress == null) {
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
 					sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
 				} else {
 					sendPacket = handleSimulationModes(dpClient, threadAddress, threadPort);
@@ -102,7 +103,6 @@ public class ErrorSimulator {
 					badConnector.receive();
 				}
 				handleSending(sendPacket);
-				threadAddress = null;
 			}
 		}
 		
