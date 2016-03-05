@@ -1,0 +1,148 @@
+# TFTP
+
+Implementation the Trivial File Transfer Protocol in Java, created for the Winter 2016 offering of SYSC3303 at Carleton University. Hosted at (
+
+## Setup
+------
+
+```
+Import the project folder into Eclipse, and run the Server.java, followed by ErrorSimulator.java, and finally Client.java in that specific order.
+```
+
+## Configuration
+------
+
+### Error Simulation
+
+
+Below are numerical values corresponding to different forms of error simulation that can be found in the ErrorSimulator class. 
+
+```
+ 0 - DEFAULT_MODE("Default"),  
+ 1 - CORRUPT_OPERATION_MODE("Corrupt Operation"),  
+ 2 - CORRUPT_BLOCK_NUM_MODE("Corrupt Block Number"),  
+ 3 - REMOVE_BLOCK_NUM_MODE("Remove Block Number"),  
+ 4 - CORRUPT_CLIENT_TRANSFER_ID_MODE("Corrupt Client Transfer ID"),  
+ 5 - CORRUPT_SERVER_TRANSFER_ID_MODE("Corrupt Server Transfer ID"),  
+ 6 - APPEND_PACKET_MODE("Append Packet Mode"),  
+ 7 - SHRINK_PACKET_MODE("Append Packet Mode"),  
+ 8 - CORRUPT_FILENAME_MODE("Corrupt Filename"),  
+ 9 - CORRUPT_TRANSFER_MODE("Corrupt Transfer"),  
+10 - CORRUPT_FILENAME_DELIMITER_MODE("Corrupt Filename Delimiter"),  
+11 - CORRUPT_TRANSFER_DELIMITER_MODE("Corrupt Transfer Delimiter"),  
+12 - REMOVE_FILENAME_MODE("Remove Filename"),  
+13 - REMOVE_TRANSFER_MODE("Remove Transfer"),  
+14 - REMOVE_FILENAME_DELIMITER_MODE("Remove Filename Delimiter"),  
+15 - REMOVE_TRANSFER_DELIMITER_MODE("Remove Transfer Delimiter"),  
+16 - CORRUPT_DATA_MODE("Corrupt Data"),  
+17 - REMOVE_DATA_MODE("Remove Data");  
+```
+### Shutdown
+
+Typing 'shutdown' into the Server class' console will terminate it after all current transfers have completed it.
+
+### File Storage
+
+By default, files transfered will be stored in the following locations:
+
+```
+Server: "src/Main/ServerStorage"
+Client: "src/Main/ClientStorage"
+```
+** If they do not exist you may have to create them **
+
+## File List
+
+```
+Client.java 
+    - A client that can read and write files to and from the server.
+
+ErrorSimulator.java 
+    - Creates various errors in the transfer between the client and server, for testing purposes
+
+Server.java 
+    - A server that can send and recieve files to and from clients that request them.
+
+AckPacketParser.java 
+    - Parses TFTP ACK packets  
+
+DataPacketParser.java 
+    - Parses TFTP DATA packets  
+
+ErrorPacketParser.java 
+    - Parses TFTP Error packets  
+
+RequestPacketParser.java 
+    - Parser for TFTP RRQ/WRQ packets  
+
+PacketParser.java 
+    - Super class for all the PacketParser classes
+
+TransferMode.java 
+    - Enum containing the different transfer modes (Netascii/Octet)  
+
+ErrorCode.java 
+    - Enum containing the various error codes  
+
+Operation.java  
+    - Enum containing the different TFTP OPcodes  
+
+Config.java 
+    - File storing configuration parameters
+
+NetworkConnector.java 
+    - Encapsulates network connection needed to send/receive packets  
+
+PacketReader.java 
+    - Parses and prints packet information
+
+SimulationMode.java 
+    - Enum containing the various error simulation modes  
+
+FileServer.java 
+    - Encapuslates writing and reading files from disk
+```
+
+## References and Acknowledgements
+
+[The TFTP Protocol (Revision 2)](https://tools.ietf.org/html/rfc1350)
+
+## Contributors
+------
+
+
+* Aaron Hill
+* Brandon Keyes
+* Jason Bromfield
+* Ihtisham Mazhar
+* Remy Gratwohl
+
+### Team Member Contribution
+
+
+**Iteration 0 and Iteration 1**
+```
+Brandon: NetworkConnector, PacketReader, Use Case Maps, minor stuff in Server/ErrorSim
+Jason:   Server, README
+Aaron:   Client, README
+Mazhar:  ErrorSim, UML Class Diagram
+Remy:    All PacketParsers, minor stuff in Server/Client
+```
+
+**Iteration 2**
+```
+Brandon: Corrupter functions 1-8 in ErrorSimulator, shutdown Server nicely, Client/Server error generation/handling
+Jason:   Diagrams, README
+Mazhar:  Corrupter functions 9-17 in ErrorSimulator, extensive test menu in ErrorSimulator
+Aaron:   Client/Server system printing standardization, file/IO class for the Client/Server
+Remy:    Modify PacketParser functions to take in the byte array length, Implement the ErrorPacketParser
+```
+
+**Iteration 3**
+```
+Brandon: Handling duplicated packets
+Jason:   Handling delayed and lost packets, README
+Mazhar:  Diagrams
+Aaron:   Handling timeouts
+Remy:    Bugfixes, Miscellaneous clean up. 
+```
