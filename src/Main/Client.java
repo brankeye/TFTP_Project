@@ -165,6 +165,7 @@ public class Client {
 
 		// main input loop
 		while (!done) {
+			System.out.println("Enter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
 			System.out.print(PROMPT);
 
 			// read and normalize input
