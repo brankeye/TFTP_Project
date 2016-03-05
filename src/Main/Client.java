@@ -109,17 +109,24 @@ public class Client {
 
 		// send WRQ packet
 		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
-		networkConnector.send(packet);
-				
-		// wait for ACK packet and validate packet
-		try {
-			packet = networkConnector.receive();
-		} catch (SocketTimeoutException e1) {
-			System.out.println("Client WRQ timed out");
-			e1.printStackTrace();
-			System.exit(1);
-		}
 		
+		int num_transmit_attempts = 0;
+		while (true){
+			num_transmit_attempts ++;
+			networkConnector.send(packet);
+					
+			// wait for ACK packet and validate packet
+			try {
+				packet = networkConnector.receive();
+				break; // break if sucessful, otherwise timeout and retransmit
+			} catch (SocketTimeoutException e1) {
+				System.out.println("Client WRQ timed out");
+				e1.printStackTrace();
+				if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+					System.exit(0);
+				}
+			}
+		}
 		fileServer.setExpectedHost(packet.getPort());
 		// add error checking on received ACK packet
 		

@@ -60,20 +60,26 @@ public class FileServer {
 					numBytes + 4,
 					destAddress, 
 					destPort);
-			networkConnector.send(packet);
 			
 			// wait for ACK packet
 			do {
 				// test for duplicate ACK here
 				do {
-					try {
-						packet = networkConnector.receive();
-					} catch (SocketTimeoutException e) {
-						System.out.println("Fileserver receive ACK timed out");
-						e.printStackTrace();
-						System.exit(1);
+					int num_transmit_attempts = 0;
+					while (true){ // Retransmit
+							num_transmit_attempts++;
+							networkConnector.send(packet);
+						try {
+							packet = networkConnector.receive();
+							break;
+						} catch (SocketTimeoutException e) {
+							System.out.println("Fileserver receive ACK timed out");
+							e.printStackTrace();
+							if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+								System.exit(0);
+							}
+						}
 					}
-					
 					if(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
 						System.out.println("\nReceived and ignored duplicate ACK.");
 					}
