@@ -102,6 +102,7 @@ public class ErrorSimulator {
 					badConnector.receive();
 				}
 				handleSending(sendPacket);
+				threadAddress = null;
 			}
 		}
 		

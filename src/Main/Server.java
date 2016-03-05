@@ -22,6 +22,7 @@ public class Server {
 	// can send and receive packets (is meant to replace manual sockets!)
 	private NetworkConnector networkConnector;
 	private ShutdownHandler  shutdownHandler;
+	boolean isRunning = true;
 	
 	final static String RELPATH = "src/Main/ServerStorage/";
 
@@ -39,7 +40,7 @@ public class Server {
 
 	// sends and receives messages
 	public void sendReceive() {
-		while (!networkConnector.isClosed()) {
+		while (isRunning) {
 			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
 			DatagramPacket datagramPacket = networkConnector.receive();
@@ -189,6 +190,7 @@ public class Server {
 			} else if (normalizedInput.length() > 0) {
 				System.out.println("Command not recognized: " + input);
 			}
+			isRunning = false;
 		}
 	}
 }
