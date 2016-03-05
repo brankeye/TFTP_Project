@@ -117,16 +117,21 @@ public class ErrorSimulator {
 				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
 				switch(networkSimMode) {
 					case DEFAULT_MODE:                { serverConnector.send(sendPacket); break; }
-					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
-					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
-					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
-					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
-					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
-					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
-					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); } break; }
-					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
+					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ) toss(); return; }
+					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ) toss(); return; }
+					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA) toss(); return; }
+					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK) toss(); return; }
+					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
+					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); 
+					serverConnector.send(sendPacket); } break; }
+					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); 
+					serverConnector.send(sendPacket); } break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); 
+					serverConnector.send(sendPacket); } break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); 
+					serverConnector.send(sendPacket); } break; }
+					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); 
+					serverConnector.send(sendPacket); } break; }
 					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { serverConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { serverConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { serverConnector.send(sendPacket); delay(); } break; }
@@ -134,7 +139,6 @@ public class ErrorSimulator {
 					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { serverConnector.send(sendPacket); delay(); } break; }
 					default: break;
 				}
-				serverConnector.send(sendPacket);
 			}
 		}
 		
@@ -186,16 +190,16 @@ public class ErrorSimulator {
 				Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
 				switch(networkSimMode) {
 					case DEFAULT_MODE:                { clientConnector.send(sendPacket); break; }
-					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   return; }
-					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   return; }
-					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  return; }
-					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   return; }
-					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) return; }
-					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
-					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); } break; }
-					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); } break; }
-					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
+					case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ) toss();  return; }
+					case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ) toss();  return; }
+					case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA) toss(); return; }
+					case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK) toss(); return; }
+					case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
+					case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); clientConnector.send(sendPacket); } break; }
+					case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); clientConnector.send(sendPacket); } break; }
+					case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(DataPacketParser.getBlockNumber(sendPacket.getData())); clientConnector.send(sendPacket); } break; }
+					case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(AckPacketParser.getBlockNumber(sendPacket.getData())); clientConnector.send(sendPacket); } break; }
+					case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); clientConnector.send(sendPacket); } break; }
 					case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { clientConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { clientConnector.send(sendPacket); delay(); } break; }
 					case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { clientConnector.send(sendPacket); delay(); } break; }
@@ -203,9 +207,10 @@ public class ErrorSimulator {
 					case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { clientConnector.send(sendPacket); delay(); } break; }
 					default: break;
 				}
-				clientConnector.send(sendPacket);
+				
 			}
 		}
+
 		
 		private void delay() {
 			try {
@@ -225,7 +230,9 @@ public class ErrorSimulator {
 			}
 		}
 	}
-	
+	public void toss(){
+		System.out.println("\nLosing packet...");
+	}
 	// returns the modified datagrampacket
 	private DatagramPacket handleSimulationModes(DatagramPacket simPacket, InetAddress address, int port) {
 		// don't mess with the error packets
