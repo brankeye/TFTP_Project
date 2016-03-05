@@ -148,6 +148,7 @@ public class ErrorSimulator {
 		private void delay(int pcktNum) {
 			if (pcktNum == selectedPacketNumber){
 				try {
+					System.out.println("\nDelaying Packet " +pcktNum);
 					Thread.sleep(delayAmount);
 				} catch(Exception e) {
 					System.out.println(e);
@@ -216,6 +217,7 @@ public class ErrorSimulator {
 		private void delay(int pcktNum) {
 			if (pcktNum == selectedPacketNumber){
 				try {
+					System.out.println("\nDelaying Packet " +pcktNum);
 					Thread.sleep(delayAmount);
 				} catch(Exception e) {
 					System.out.println(e);
