@@ -1,4 +1,4 @@
-package Main;
+package Main.Links;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -48,15 +48,15 @@ public abstract class Link implements Runnable {
 			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  toss(); return; }
 			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   toss(); return; }
 			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
-			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); netConnector.send(sendPacket); } break; }
-			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); netConnector.send(sendPacket); } break; }
-			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(); netConnector.send(sendPacket); } break; }
-			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(); netConnector.send(sendPacket); } break; }
-			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); netConnector.send(sendPacket); } break; }
+			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
+			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
+			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(numDataPackets, targetPacket); } break; }
+			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(numAckPackets,  targetPacket); } break; }
+			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
 			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { netConnector.send(sendPacket); delay(); } break; }
 			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { netConnector.send(sendPacket); delay(numDataPackets, targetPacket); } break; }
+			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { netConnector.send(sendPacket); delay(numAckPackets,  targetPacket); } break; }
 			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { netConnector.send(sendPacket); delay(); } break; }
 			default: break;
 		}
@@ -65,14 +65,20 @@ public abstract class Link implements Runnable {
 	
 	public void delay() {
 		try {
+			System.out.println("\nDelaying packet by " + delayAmount + "ms!\n");
 			Thread.sleep(delayAmount);
 		} catch(Exception e) {
 			System.out.println(e);
 		}
 	}
 	
+	public void delay(int currentPacketNum, int expectedPacketNum) {
+		if(currentPacketNum != expectedPacketNum) { return; }
+		delay();
+	}
+	
 	public void toss(){
-		System.out.println("\nLosing packet...");
+		System.out.println("\nLosing packet!\n");
 	}
 	
 	// This is the Packet Simulation Mode stuff

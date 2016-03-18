@@ -6,6 +6,8 @@ import General.Config;
 import General.NetworkConnector;
 import General.NetworkSimulationMode;
 import General.PacketSimulationMode;
+import Main.Links.ClientLink;
+import Main.Links.ServerLink;
 
 public class ErrorSimulator {
 

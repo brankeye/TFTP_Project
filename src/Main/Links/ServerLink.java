@@ -1,4 +1,4 @@
-package Main;
+package Main.Links;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -7,6 +7,8 @@ import java.net.SocketTimeoutException;
 import General.NetworkConnector;
 import General.NetworkSimulationMode;
 import General.PacketSimulationMode;
+import NetworkTypes.Operation;
+import PacketParsers.PacketParser;
 
 public class ServerLink extends Link {
 	
@@ -15,7 +17,7 @@ public class ServerLink extends Link {
 	private int              threadPort    = -1;
 	private ClientLink       clientLink    = null;
 	
-	ServerLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
+	public ServerLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
 		super(psm, nsm, client, server, d, t);
 		badConnector = new NetworkConnector(false);
 	}
@@ -35,6 +37,15 @@ public class ServerLink extends Link {
 			if(threadAddress == null) {
 				threadAddress = dpServer.getAddress();
 				threadPort    = dpServer.getPort();
+			}
+			
+			Operation opcode = PacketParser.getOpcode(dpServer.getData(), dpServer.getLength());
+			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+				numDataPackets = 0;
+				numAckPackets  = 0;
+			} else {
+				if(opcode == Operation.DATA) { numDataPackets++; }
+				else if(opcode == Operation.ACK) { numAckPackets++; }
 			}
 			
 			DatagramPacket sendPacket = handleSimulationModes(dpServer, clientLink.getClientAddress(), clientLink.getClientPort());

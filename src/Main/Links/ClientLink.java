@@ -1,4 +1,4 @@
-package Main;
+package Main.Links;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -21,7 +21,7 @@ public class ClientLink extends Link {
 	private int              serverPort;
 	private ServerLink       serverLink    = null;
 
-	ClientLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
+	public ClientLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
 		super(psm, nsm, client, server, d, t);
 		badConnector = new NetworkConnector(false);
 		
@@ -53,10 +53,15 @@ public class ClientLink extends Link {
 			Operation opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
 			DatagramPacket sendPacket;
 			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+				numDataPackets = 0;
+				numAckPackets  = 0;
 				sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
 			} else {
+				if(opcode == Operation.DATA) { numDataPackets++; }
+				else if(opcode == Operation.ACK) { numAckPackets++; }
 				sendPacket = handleSimulationModes(dpClient, serverLink.getThreadAddress(), serverLink.getThreadPort());
 			}
+			
 			if(packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
 				badConnector.send(sendPacket);
 				try {
