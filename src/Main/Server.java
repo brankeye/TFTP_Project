@@ -123,8 +123,14 @@ public class Server {
 						return;
 					}
 				} else {
+					// this exception will occur if there is an access violation
+					String errMsg    = "File not found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
 					System.out.println("File not found");
-					System.exit(1);
+					return;
 				}
 			} else {
 				if (requestOpcode == Operation.WRQ) {
