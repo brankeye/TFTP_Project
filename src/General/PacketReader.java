@@ -35,6 +35,11 @@ public class PacketReader {
 	}
 	
 	private void readPacket(DatagramPacket packet) {
+		
+		if (!Config.PRINT_PACKETS) {
+			return;
+		}
+		
 		int length = packet.getLength();
 		System.out.println("Packet length: " + length);
 

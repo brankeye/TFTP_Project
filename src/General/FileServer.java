@@ -43,8 +43,8 @@ public class FileServer {
 			try {
 				numBytes = inputStream.read(dataBuffer, 0, Config.MAX_PAYLOAD_SIZE);
 			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
+				// error reading from file
+				
 			}
 			
 			if (numBytes < Config.MAX_PAYLOAD_SIZE) {

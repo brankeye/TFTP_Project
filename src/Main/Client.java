@@ -25,9 +25,6 @@ public class Client {
 	OutputStream outputStream;
 	FileServer fileServer;
 
-	final static int NOT_ZERO = 1;
-	final static int SERVER_PORT = 69;
-
 	final static String PROMPT = "TFTP> ";
 	final static String RELPATH = "src/Main/ClientStorage/";
 
@@ -48,7 +45,7 @@ public class Client {
 	}
 
 	// reads a server-hosted file and writes it locally
-	private boolean read(String filename) {
+	private void read(String filename) {
 
 		DatagramPacket packet = null;
 		byte[] rrqBuffer = RequestPacketParser.getByteArray(Operation.RRQ, filename);
@@ -57,17 +54,24 @@ public class Client {
 		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
 		networkConnector.send(packet);
 
-		File file = null;
+		File directory = new File(RELPATH);
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
+		
+		File file = new File(RELPATH + filename);
+
 		try {
-			file = new File(RELPATH + filename);
 			outputStream = new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 			System.out.println("File not found: " + RELPATH + filename);
 			try {
 				outputStream.close();
-			} catch(IOException ex) {}
-			file.delete();
-			return false;
+			} catch (IOException e2) {}
+				
+				file.delete();
+			return;
 		}
 
 		// use fileServer to receive DATA/send ACKs
@@ -83,12 +87,10 @@ public class Client {
 		if(!successful) {
 			file.delete();
 		}
-
-		return successful;
 	}
 
 	// reads a local file and writes it to server
-	private boolean write(String filename) {
+	private void write(String filename) {
 
 		DatagramPacket packet = null;
 		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
@@ -100,11 +102,18 @@ public class Client {
 			inputStream = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
+			
+			byte[] error = {0, 5, 0, 1};
+			byte[] msg = new String("File not found: " + RELPATH + filename).getBytes();
+			System.arraycopy(error, 4, msg, 0, msg.length);
+			packet = new DatagramPacket(error, error.length, destAddress, destPort);
+			networkConnector.send(packet);
+			
 			try {
 				inputStream.close();
 			} catch(IOException ex) {}
-			file.delete();
-			return false;
+				file.delete();
+			return;
 		}
 
 		// send WRQ packet
@@ -118,10 +127,9 @@ public class Client {
 			// wait for ACK packet and validate packet
 			try {
 				packet = networkConnector.receive();
-				break; // break if sucessful, otherwise timeout and retransmit
+				break; // break if successful, otherwise timeout and retransmit
 			} catch (SocketTimeoutException e1) {
 				System.out.println("Client WRQ timed out");
-				e1.printStackTrace();
 				if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 					System.exit(0);
 				}
@@ -130,10 +138,9 @@ public class Client {
 		fileServer.setExpectedHost(packet.getPort());
 		// add error checking on received ACK packet
 		
-		boolean successful = false;
 		if(AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
-			successful = fileServer.send(inputStream, destAddress, destPort);
+			fileServer.send(inputStream, destAddress, destPort);
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 			System.out.println("Received ERROR packet. Transfer stopped.");
 		} else {
@@ -150,8 +157,6 @@ public class Client {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
-		return successful;
 	}
 
 	public static void main(String[] args) {

@@ -30,7 +30,6 @@ public class Server {
 	public Server() {
 		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, false);
 		shutdownHandler  = new ShutdownHandler();
-		
 	}
 	
 	public void initialize() {
@@ -113,11 +112,33 @@ public class Server {
 					try {
 						file.createNewFile();
 					} catch (IOException e) {
-						e.printStackTrace();
+						// this exception will occur if there is an access violation
+						String errMsg    = "Access Violation";
+						int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+						byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
+						DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+						threadedNetworkConnector.send(errorPacket);
+						
+						System.out.println("Thread Exiting");
+						return;
 					}
 				} else {
 					System.out.println("File not found");
 					System.exit(1);
+				}
+			} else {
+				if (requestOpcode == Operation.WRQ) {
+					System.out.println("File exists");
+					
+					// send Error Code 2
+					String errMsg    = "FileExists";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_EXISTS, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
+					
+					System.out.println("Thread Exiting");
+					return;
 				}
 			}
 
