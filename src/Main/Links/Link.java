@@ -23,13 +23,13 @@ public abstract class Link implements Runnable {
 	int numDataPackets = 0;
 	int numAckPackets  = 0;
 	
-	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
+	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
 		packetSimMode = psm;
 		netSimMode    = nsm;
-		clientConnector  = client;
-		serverConnector  = server;
 		delayAmount   = d;
 		targetPacket  = t;
+		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, false);
+		serverConnector  = new NetworkConnector(false);
 	}
 	
 	@Override

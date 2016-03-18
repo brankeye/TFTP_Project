@@ -10,12 +10,6 @@ import Main.Links.ClientLink;
 import Main.Links.ServerLink;
 
 public class ErrorSimulator {
-
-	// must receive and send to the Client with the clientConnector
-	private NetworkConnector clientConnector;
-
-	// must receive and send to the Server with the serverConnector
-	private NetworkConnector serverConnector;
 	
 	private Scanner               scanner;
 	private PacketSimulationMode  packetSimMode;
@@ -28,9 +22,6 @@ public class ErrorSimulator {
 
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
-
-		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, false);
-		serverConnector  = new NetworkConnector(false);
 		scanner          = new Scanner(System.in);
 	}
 
@@ -43,8 +34,8 @@ public class ErrorSimulator {
 	
 	private void establishLinks() {
 		//Receive packet from client
-		clientToServerLink = new ClientLink(packetSimMode, networkSimMode, clientConnector, serverConnector, delayAmount, selectedPacketNumber);
-		serverToClientLink = new ServerLink(packetSimMode, networkSimMode, clientConnector, serverConnector, delayAmount, selectedPacketNumber);
+		clientToServerLink = new ClientLink(packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
+		serverToClientLink = new ServerLink(packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
 		
 		clientToServerLink.setServerLink(serverToClientLink);
 		serverToClientLink.setClientLink(clientToServerLink);

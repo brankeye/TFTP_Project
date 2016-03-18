@@ -21,8 +21,8 @@ public class ClientLink extends Link {
 	private int              serverPort;
 	private ServerLink       serverLink    = null;
 
-	public ClientLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
-		super(psm, nsm, client, server, d, t);
+	public ClientLink(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
+		super(psm, nsm, d, t);
 		badConnector = new NetworkConnector(false);
 		
 		try {
