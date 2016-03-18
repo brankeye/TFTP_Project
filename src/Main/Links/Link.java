@@ -45,8 +45,8 @@ public abstract class Link implements Runnable {
 			case DEFAULT_MODE:                { netConnector.send(sendPacket); return; }
 			case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   toss(); return; }
 			case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   toss(); return; }
-			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA)  toss(); return; }
-			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK)   toss(); return; }
+			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA && numDataPackets == targetPacket) { toss(); return; } }
+			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { toss(); return; } }
 			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
 			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
 			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
