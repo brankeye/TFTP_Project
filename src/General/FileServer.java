@@ -68,11 +68,11 @@ public class FileServer {
 				do {
 					int num_transmit_attempts = 0;
 					while (true){ // Retransmit
-							num_transmit_attempts++;
-							if(sendDataPacket) {
-								networkConnector.send(dataPacket);
-								sendDataPacket = false;
-							}
+						num_transmit_attempts++;
+						if(sendDataPacket) {
+							networkConnector.send(dataPacket);
+							sendDataPacket = false;
+						}
 						try {
 							packet = networkConnector.receive();
 							break;
@@ -81,7 +81,7 @@ public class FileServer {
 							e.printStackTrace();
 							sendDataPacket = true;
 							if (num_transmit_attempts >= Config.MAX_TRANSMITS){
-								System.exit(0);
+								return false;
 							}
 						}
 					}
@@ -128,12 +128,19 @@ public class FileServer {
 			
 			// wait for DATA packet and validate
 			do {
-				try {
-					packet = networkConnector.receive();
-				} catch (SocketTimeoutException e) {
-					System.out.println("FileServer receive DATA timed out");
-					e.printStackTrace();
-					System.exit(1);
+				int num_transmit_attempts = 0;
+				while (true){ // Retransmit
+					num_transmit_attempts++;
+					try {
+						packet = networkConnector.receive();
+						break;
+					} catch (SocketTimeoutException e) {
+						System.out.println("FileServer receive DATA timed out");
+						e.printStackTrace();
+						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							return false;
+						}
+					}
 				}
 				
 				if(expectedPort == -1) {
