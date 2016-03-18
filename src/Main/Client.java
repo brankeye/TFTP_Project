@@ -102,24 +102,16 @@ public class Client {
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
 
-			/*
-			try {
-				inputStream.close();
-			} catch(IOException ex) {}
-			
-			file.delete();
-			 */
-
 			return;
 		}
 
 		// send WRQ packet
-		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
+		DatagramPacket wrqPacket = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		
 		int num_transmit_attempts = 0;
 		while (true){
 			num_transmit_attempts ++;
-			networkConnector.send(packet);
+			networkConnector.send(wrqPacket);
 					
 			// wait for ACK packet and validate packet
 			try {
