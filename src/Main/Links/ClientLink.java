@@ -47,10 +47,9 @@ public class ClientLink extends Link {
 				e.printStackTrace();
 				System.exit(1);
 			}
-			if(clientAddress == null) {
-				clientAddress = dpClient.getAddress();
-				clientPort    = dpClient.getPort();
-			}
+			
+			clientAddress = dpClient.getAddress();
+			clientPort    = dpClient.getPort();
 			
 			Operation opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
 			DatagramPacket sendPacket;
