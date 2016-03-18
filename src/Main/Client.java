@@ -102,11 +102,13 @@ public class Client {
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
 
+			/*
 			try {
 				inputStream.close();
 			} catch(IOException ex) {}
 			
 			file.delete();
+			 */
 
 			return;
 		}
@@ -172,7 +174,7 @@ public class Client {
 
 		// main input loop
 		while (!done) {
-			System.out.println("Enter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
+			System.out.println("\nEnter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
 			System.out.print(PROMPT);
 
 			// read and normalize input
