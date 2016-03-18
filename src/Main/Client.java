@@ -102,12 +102,6 @@ public class Client {
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
 
-			byte[] error = {0, 5, 0, 1};
-			byte[] msg = new String("File not found: " + RELPATH + filename).getBytes();
-			System.arraycopy(error, 4, msg, 0, msg.length);
-			packet = new DatagramPacket(error, error.length, destAddress, destPort);
-			networkConnector.send(packet);
-
 			try {
 				inputStream.close();
 			} catch(IOException ex) {}
