@@ -14,7 +14,8 @@ public abstract class Link implements Runnable {
 
 	PacketSimulationMode  packetSimMode;
 	NetworkSimulationMode netSimMode;
-	NetworkConnector      netConnector;
+	NetworkConnector      clientConnector;
+	NetworkConnector      serverConnector;
 	int                   delayAmount;
 	int                   targetPacket;
 	
@@ -22,10 +23,11 @@ public abstract class Link implements Runnable {
 	int numDataPackets = 0;
 	int numAckPackets  = 0;
 	
-	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector nc, int d, int t) {
+	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
 		packetSimMode = psm;
 		netSimMode    = nsm;
-		netConnector  = nc;
+		clientConnector  = client;
+		serverConnector  = server;
 		delayAmount   = d;
 		targetPacket  = t;
 	}
@@ -36,7 +38,7 @@ public abstract class Link implements Runnable {
 	}
 	
 	// includes network error handling
-	public void handleSending(DatagramPacket sendPacket) {
+	public void handleSending(NetworkConnector netConnector, DatagramPacket sendPacket) {
 		// account for network errors
 		Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
 		switch(netSimMode) {

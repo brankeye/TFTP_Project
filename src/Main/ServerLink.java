@@ -15,8 +15,8 @@ public class ServerLink extends Link {
 	private int              threadPort    = -1;
 	private ClientLink       clientLink    = null;
 	
-	ServerLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector nc, int d, int t) {
-		super(psm, nsm, nc, d, t);
+	ServerLink(PacketSimulationMode psm, NetworkSimulationMode nsm, NetworkConnector client, NetworkConnector server, int d, int t) {
+		super(psm, nsm, client, server, d, t);
 		badConnector = new NetworkConnector(false);
 	}
 	
@@ -26,7 +26,7 @@ public class ServerLink extends Link {
 			//Receive packet from server
 			DatagramPacket dpServer = null;
 			try {
-				dpServer = netConnector.receive();
+				dpServer = serverConnector.receive();
 			} catch (SocketTimeoutException e) {
 				System.out.println("ErrorSimulator ServerLink timed out");
 				e.printStackTrace();
@@ -48,7 +48,7 @@ public class ServerLink extends Link {
 					System.exit(1);
 				}
 			}
-			handleSending(sendPacket);
+			handleSending(clientConnector, sendPacket);
 		}
 	}
 	

@@ -1,6 +1,5 @@
 package Main;
 
-import java.net.InetAddress;
 import java.util.Scanner;
 
 import General.Config;
@@ -22,8 +21,8 @@ public class ErrorSimulator {
 	int                           selectedPacketNumber = -1;
 	int                           delayAmount = 1000;
 	
-	ClientLink clientLink;
-	ServerLink serverLink;
+	ClientLink clientToServerLink;
+	ServerLink serverToClientLink;
 
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
@@ -42,16 +41,16 @@ public class ErrorSimulator {
 	
 	private void establishLinks() {
 		//Receive packet from client
-		clientLink = new ClientLink(packetSimMode, networkSimMode, clientConnector, delayAmount, selectedPacketNumber);
-		serverLink = new ServerLink(packetSimMode, networkSimMode, serverConnector, delayAmount, selectedPacketNumber);
+		clientToServerLink = new ClientLink(packetSimMode, networkSimMode, clientConnector, serverConnector, delayAmount, selectedPacketNumber);
+		serverToClientLink = new ServerLink(packetSimMode, networkSimMode, clientConnector, serverConnector, delayAmount, selectedPacketNumber);
 		
-		clientLink.setServerLink(serverLink);
-		serverLink.setClientLink(clientLink);
+		clientToServerLink.setServerLink(serverToClientLink);
+		serverToClientLink.setClientLink(clientToServerLink);
 		
-		Thread clientThread = new Thread(clientLink);
+		Thread clientThread = new Thread(clientToServerLink);
 		clientThread.start();
 		
-		Thread serverThread = new Thread(serverLink);
+		Thread serverThread = new Thread(serverToClientLink);
 		serverThread.start();
 	}
 	

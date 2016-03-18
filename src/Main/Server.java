@@ -30,7 +30,6 @@ public class Server {
 	public Server() {
 		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, false);
 		shutdownHandler  = new ShutdownHandler();
-		
 	}
 	
 	public void initialize() {
