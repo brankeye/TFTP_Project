@@ -16,6 +16,9 @@ public class ErrorSimulator {
 	private NetworkSimulationMode networkSimMode;
 	int                           selectedPacketNumber = -1;
 	int                           delayAmount = 1000;
+
+	NetworkConnector      clientConnector;
+	NetworkConnector      serverConnector;
 	
 	ClientLink clientToServerLink;
 	ServerLink serverToClientLink;
@@ -23,6 +26,8 @@ public class ErrorSimulator {
 	// create multiple network connectors for client and server
 	public ErrorSimulator() {
 		scanner          = new Scanner(System.in);
+		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, false);
+		serverConnector  = new NetworkConnector(false);
 	}
 
 	public static void main(String[] args) {
@@ -34,8 +39,8 @@ public class ErrorSimulator {
 	
 	private void establishLinks() {
 		//Receive packet from client
-		clientToServerLink = new ClientLink(packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
-		serverToClientLink = new ServerLink(packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
+		clientToServerLink = new ClientLink(clientConnector, serverConnector, packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
+		serverToClientLink = new ServerLink(clientConnector, serverConnector, packetSimMode, networkSimMode, delayAmount, selectedPacketNumber);
 		
 		clientToServerLink.setServerLink(serverToClientLink);
 		serverToClientLink.setClientLink(clientToServerLink);

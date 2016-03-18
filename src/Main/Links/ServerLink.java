@@ -12,14 +12,16 @@ import PacketParsers.PacketParser;
 
 public class ServerLink extends Link {
 	
-	private NetworkConnector badConnector;
+	private NetworkConnector clientConnector, serverConnector, badConnector;
 	private InetAddress      threadAddress = null;
 	private int              threadPort    = -1;
 	private ClientLink       clientLink    = null;
 	
-	public ServerLink(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
+	public ServerLink(NetworkConnector client, NetworkConnector server, PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
 		super(psm, nsm, d, t);
 		badConnector = new NetworkConnector(false);
+		clientConnector = client;
+		serverConnector = server;
 	}
 	
 	@Override

@@ -14,16 +14,18 @@ import PacketParsers.PacketParser;
 
 public class ClientLink extends Link {
 	
-	private NetworkConnector badConnector;
+	private NetworkConnector clientConnector, serverConnector, badConnector;
 	private InetAddress      clientAddress = null;
 	private int              clientPort    = -1;
 	private InetAddress      serverAddress;
 	private int              serverPort;
 	private ServerLink       serverLink    = null;
 
-	public ClientLink(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
+	public ClientLink(NetworkConnector client, NetworkConnector server, PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
 		super(psm, nsm, d, t);
 		badConnector = new NetworkConnector(false);
+		clientConnector = client;
+		serverConnector = server;
 		
 		try {
 			serverAddress = InetAddress.getByName(Config.SERVER_ADDRESS);

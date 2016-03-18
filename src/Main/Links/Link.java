@@ -14,8 +14,6 @@ public abstract class Link implements Runnable {
 
 	PacketSimulationMode  packetSimMode;
 	NetworkSimulationMode netSimMode;
-	NetworkConnector      clientConnector;
-	NetworkConnector      serverConnector;
 	int                   delayAmount;
 	int                   targetPacket;
 	
@@ -28,8 +26,6 @@ public abstract class Link implements Runnable {
 		netSimMode    = nsm;
 		delayAmount   = d;
 		targetPacket  = t;
-		clientConnector  = new NetworkConnector(Config.ERR_SIM_PORT, false, false);
-		serverConnector  = new NetworkConnector(false);
 	}
 	
 	@Override
@@ -50,13 +46,13 @@ public abstract class Link implements Runnable {
 			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
 			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
 			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA)  { delay(numDataPackets, targetPacket); } break; }
-			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK)   { delay(numAckPackets,  targetPacket); } break; }
+			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA && numDataPackets == targetPacket) { delay(); } break; }
+			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { delay(); } break; }
 			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
 			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { netConnector.send(sendPacket); delay(); } break; }
 			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA)  { netConnector.send(sendPacket); delay(numDataPackets, targetPacket); } break; }
-			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK)   { netConnector.send(sendPacket); delay(numAckPackets,  targetPacket); } break; }
+			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA && numDataPackets == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
 			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { netConnector.send(sendPacket); delay(); } break; }
 			default: break;
 		}
@@ -70,11 +66,6 @@ public abstract class Link implements Runnable {
 		} catch(Exception e) {
 			System.out.println(e);
 		}
-	}
-	
-	public void delay(int currentPacketNum, int expectedPacketNum) {
-		if(currentPacketNum != expectedPacketNum) { return; }
-		delay();
 	}
 	
 	public void toss(){
