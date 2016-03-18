@@ -13,5 +13,5 @@ public class Config {
 	public static int          MAX_PRINT_SIZE    = 32;
 	public static int          MAX_TIMEOUT       = 2000;
 	public static int		   MAX_TRANSMITS     = 5;
-	public static boolean      PRINT_PACKETS     = false;
+	public static boolean      PRINT_PACKETS     = true;
 }

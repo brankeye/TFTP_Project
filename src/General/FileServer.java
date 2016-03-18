@@ -55,11 +55,12 @@ public class FileServer {
 			}
 
 			// send DATA packet
-			packet = new DatagramPacket(
+			DatagramPacket dataPacket = new DatagramPacket(
 					DataPacketParser.getByteArray(blockNumber, dataBuffer),
 					numBytes + 4,
 					destAddress, 
 					destPort);
+			boolean sendDataPacket = true;
 			
 			// wait for ACK packet
 			do {
@@ -68,13 +69,17 @@ public class FileServer {
 					int num_transmit_attempts = 0;
 					while (true){ // Retransmit
 							num_transmit_attempts++;
-							networkConnector.send(packet);
+							if(sendDataPacket) {
+								networkConnector.send(dataPacket);
+								sendDataPacket = false;
+							}
 						try {
 							packet = networkConnector.receive();
 							break;
 						} catch (SocketTimeoutException e) {
 							System.out.println("Fileserver receive ACK timed out");
 							e.printStackTrace();
+							sendDataPacket = true;
 							if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 								System.exit(0);
 							}
@@ -158,33 +163,42 @@ public class FileServer {
 			boolean duplicateDataPacket = false;
 			if(DataPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
 				duplicateDataPacket = true;
-				blockNumber--;
 			}
-			if (!duplicateDataPacket && packet.getLength() > 3) {
-				try {
-					outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
-	 			} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
+			
+			// Not a duplicate DATA packet
+			if(!duplicateDataPacket) {
+				if (packet.getLength() > 3) {
+					try {
+						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
+		 			} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+				} else  {
+					done = true;
+				}	
+					
+				if (packet.getLength() < 516) {
+					done = true;
 				}
-			} else  {
-				done = true;
-			}	
 				
-			if (packet.getLength() < 516) {
-				done = true;
+				// send ACK packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(blockNumber),
+						4,
+						destAddress, 
+						destPort);
+				
+				blockNumber += 1;	
+			} else {
+				// Acknowledge a duplicate DATA packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(DataPacketParser.getBlockNumber(packet.getData())),
+						4,
+						destAddress, 
+						destPort);
 			}
-			
-			// send ACK packet
-			packet = new DatagramPacket(
-					AckPacketParser.getByteArray(blockNumber),
-					4,
-					destAddress, 
-					destPort);
-			
 			networkConnector.send(packet);
-			
-			blockNumber += 1;		
 		}
 		return true;
 	}
