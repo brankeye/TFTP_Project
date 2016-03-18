@@ -137,10 +137,9 @@ public class Client {
 		fileServer.setExpectedHost(packet.getPort());
 		// add error checking on received ACK packet
 		
-		boolean successful = false;
 		if(AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
-			successful = fileServer.send(inputStream, destAddress, destPort);
+			fileServer.send(inputStream, destAddress, destPort);
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 			System.out.println("Received ERROR packet. Transfer stopped.");
 		} else {
