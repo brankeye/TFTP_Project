@@ -122,6 +122,7 @@ public class FileServer {
 		DatagramPacket packet = null;
 		boolean done          = false;
 		int blockNumber       = 1;
+		expectedPort          = -1;
 		
 		while (!done) {
 			
