@@ -60,60 +60,58 @@ By default, files transfered will be stored in the following locations:
 
 Server: "src/Main/ServerStorage"
 Client: "src/Main/ClientStorage"
-** The storage folder for the Client is created automatically when the system is run, but you must create the storage folder for the Server. **
+
+** The storage folder for the Client is created automatically when the system is run, but you must create the storage folder for the Server manually. **
 
 File List
 
-Client.java 
-    - A client that can read and write files to and from the server.
+	Client.java 
+		- A client that can read and write files to and from the server.
 
-ErrorSimulator.java 
-    - Creates various errors in the transfer between the client and server, for testing purposes
+	ErrorSimulator.java 
+		- Creates various errors in the transfer between the client and server, for testing purposes
 
-Server.java 
-    - A server that can send and recieve files to and from clients that request them.
+	Server.java 
+		- A server that can send and recieve files to and from clients that request them.
 
-AckPacketParser.java 
-    - Parses TFTP ACK packets  
+	AckPacketParser.java 
+		- Parses TFTP ACK packets  
 
-DataPacketParser.java 
-    - Parses TFTP DATA packets  
+	DataPacketParser.java 
+		- Parses TFTP DATA packets  
 
-ErrorPacketParser.java 
-    - Parses TFTP Error packets  
+	ErrorPacketParser.java 
+		- Parses TFTP Error packets  
 
-RequestPacketParser.java 
-    - Parser for TFTP RRQ/WRQ packets  
+	RequestPacketParser.java 
+		- Parser for TFTP RRQ/WRQ packets  
 
-PacketParser.java 
-    - Super class for all the PacketParser classes
+	PacketParser.java 
+		- Super class for all the PacketParser classes
 
-TransferMode.java 
-    - Enum containing the different transfer modes (Netascii/Octet)  
+	TransferMode.java 
+		- Enum containing the different transfer modes (Netascii/Octet)  
 
-ErrorCode.java 
-    - Enum containing the various error codes  
+	ErrorCode.java 
+		- Enum containing the various error codes  
 
-Operation.java  
-    - Enum containing the different TFTP OPcodes  
+	Operation.java  
+		- Enum containing the different TFTP OPcodes  
 
-Config.java 
-    - File storing configuration parameters
+	Config.java 
+		- File storing configuration parameters
 
-NetworkConnector.java 
-    - Encapsulates network connection needed to send/receive packets  
+	NetworkConnector.java 
+		- Encapsulates network connection needed to send/receive packets  
 
-PacketReader.java 
-    - Parses and prints packet information
+	PacketReader.java 
+		- Parses and prints packet information
 
-SimulationMode.java 
-    - Enum containing the various error simulation modes  
+	SimulationMode.java 
+		- Enum containing the various error simulation modes  
 
-FileServer.java 
-    - Encapuslates writing and reading files from disk
-References and Acknowledgements
-
-The TFTP Protocol (Revision 2)
+	FileServer.java 
+		- Encapuslates writing and reading files from disk
 
 Contributors
 
@@ -123,10 +121,7 @@ Jason Bromfield
 Ihtisham Mazhar
 Remy Gratwohl
 
-Team Member Contribution
-
 Iteration 0 and Iteration 1
-
 Brandon: NetworkConnector, PacketReader, Use Case Maps, minor stuff in Server/ErrorSim
 Jason:   Server, README
 Aaron:   Client, README
@@ -134,7 +129,6 @@ Mazhar:  ErrorSim, UML Class Diagram
 Remy:    All PacketParsers, minor stuff in Server/Client
 
 Iteration 2
-
 Brandon: Corrupter functions 1-8 in ErrorSimulator, shutdown Server nicely, Client/Server error generation/handling
 Jason:   Diagrams, README
 Mazhar:  Corrupter functions 9-17 in ErrorSimulator, extensive test menu in ErrorSimulator
