@@ -48,30 +48,29 @@ public class Client {
 	private void read(String filename) {
 
 		DatagramPacket packet = null;
-		byte[] rrqBuffer = RequestPacketParser.getByteArray(Operation.RRQ, filename);
-
-		// send RRQ packet
-		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
-		networkConnector.send(packet);
+		byte[] rrqBuffer      = RequestPacketParser.getByteArray(Operation.RRQ, filename);
 
 		File directory = new File(RELPATH);
 		if (!directory.exists()) {
 			directory.mkdirs();
 		}
 		
+		// open file for writing
 		File file = new File(RELPATH + filename);
-
+		file = new File(RELPATH + filename);
+		
+		// open outputStream
 		try {
 			outputStream = new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.out.println("File not found: " + RELPATH + filename);
-			try {
-				outputStream.close();
-			} catch(IOException ex) {}
+			System.out.println("Error opening file: "  + e.getMessage());
 			file.delete();
 			return;
 		}
+		
+		// send RRQ packet
+		packet = new DatagramPacket(rrqBuffer, rrqBuffer.length, destAddress, destPort);
+		networkConnector.send(packet);
 
 		// use fileServer to receive DATA/send ACKs
 		boolean successful = fileServer.receive(packet, outputStream, destAddress, destPort);
@@ -92,16 +91,22 @@ public class Client {
 	private void write(String filename) {
 
 		DatagramPacket packet = null;
-		byte[] wrqBuffer  = RequestPacketParser.getByteArray(Operation.WRQ, filename);
+		byte[] wrqBuffer      = RequestPacketParser.getByteArray(Operation.WRQ, filename);
+
+		// make sure directory exists
+		File directory = new File(RELPATH);
+		if (!directory.exists()) {
+			directory.mkdirs();
+		}
 		
 		// open local file for reading
-		File file = null;
+		File file = new File(RELPATH + filename);
+
+		// open input stream
 		try {
-			file = new File(RELPATH + filename);
 			inputStream = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
-			System.out.println("File not found: " + RELPATH + filename);
-
+			System.out.println("Error opening file: " + e.getMessage());
 			return;
 		}
 
@@ -155,6 +160,7 @@ public class Client {
 		String input = "";
 		String normalizedInput = "";
 		String filename = "";
+		String helptext = "\nEnter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.";
 
 		System.out.println(" _____   _____   _____   _____     _     _____ ");
 		System.out.println("|_   _| |  ___| |_   _| |  _  |   / |   |__   /");
@@ -163,10 +169,10 @@ public class Client {
 		System.out.println("  | |   | |       | |   | |      _| |_   / /   ");
 		System.out.println("  |_|   |_|       |_|   |_|     |_____| /_/    ");
 		System.out.println("");
-
+		System.out.println(helptext);
+		
 		// main input loop
-		while (!done) {
-			System.out.println("\nEnter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
+		while (!done) {			
 			System.out.print(PROMPT);
 
 			// read and normalize input
@@ -192,6 +198,7 @@ public class Client {
 				done = true;
 			} else if (normalizedInput.length() > 0) {
 				System.out.println("Command not recognized: " + input);
+				System.out.println(helptext);
 			}
 		}
 

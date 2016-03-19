@@ -103,7 +103,7 @@ public class Server {
 		public void run() {
 			// read the packet
 			byte[] data = datagramPacket.getData();
-			int length = datagramPacket.getLength();
+			int length  = datagramPacket.getLength();
 
 			InetAddress destAddress = datagramPacket.getAddress();
 			int destPort            = datagramPacket.getPort();
@@ -130,13 +130,13 @@ public class Server {
 						return;
 					}
 				} else {
-					// this exception will occur if there is an access violation
+					// this exception will occur if the file is not found
 					String errMsg    = "File not found";
 					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
-					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
 					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
 					threadedNetworkConnector.send(errorPacket);
-					System.out.println("File not found");
+					System.out.println("File not found(1)");
 					return;
 				}
 			} else {
@@ -152,13 +152,14 @@ public class Server {
 					
 					System.out.println("Thread Exiting");
 					return;
-				}
+				} 
+				// else if read, carry on
 			}
 
 			
 			// response for the first request // for now, the only things we
 			// have to deal with are 1s and 2s
-			Operation opcode = PacketParser.getOpcode(data,datagramPacket.getLength());
+			Operation opcode = PacketParser.getOpcode(data, datagramPacket.getLength());
 			if(opcode == Operation.RRQ) {
 
 				FileInputStream inputStream  = null;
@@ -166,8 +167,13 @@ public class Server {
 				try {
 					inputStream = new FileInputStream(file);
 				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-					System.exit(1);
+					String errMsg    = "File not found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
+					System.out.println("File not found(2)");
+					return;
 				}
 				
 				fileServer.send(inputStream, destAddress, destPort);
@@ -185,8 +191,13 @@ public class Server {
 				try {
 					outputStream = new FileOutputStream(file, false);
 				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-					System.exit(1);
+					String errMsg    = "File not found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
+					System.out.println("File not found(3)");
+					return;
 				}
 				
 				byte[] serverRes = AckPacketParser.getByteArray(0);
