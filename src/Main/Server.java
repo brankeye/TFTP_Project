@@ -130,21 +130,21 @@ public class Server {
 						return;
 					}
 				} else {
-					// this exception will occur if there is an access violation
-					String errMsg    = "File not found";
+					// this exception will occur if there is an file not found
+					String errMsg    = "File Not Found";
 					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
-					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
 					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
 					threadedNetworkConnector.send(errorPacket);
-					System.out.println("File not found");
+					System.out.println(errMsg);
 					return;
 				}
 			} else {
 				if (requestOpcode == Operation.WRQ) {
-					System.out.println("File exists");
+					System.out.println("File Exists");
 					
 					// send Error Code 2
-					String errMsg    = "FileExists";
+					String errMsg    = "File Exists";
 					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
 					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_EXISTS, errMsg);
 					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
@@ -156,8 +156,7 @@ public class Server {
 			}
 
 			
-			// response for the first request // for now, the only things we
-			// have to deal with are 1s and 2s
+			// response for the first request
 			Operation opcode = PacketParser.getOpcode(data,datagramPacket.getLength());
 			if(opcode == Operation.RRQ) {
 
@@ -167,7 +166,15 @@ public class Server {
 					inputStream = new FileInputStream(file);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
-					System.exit(1);
+					
+					// this exception will occur if there is an file not found
+					String errMsg    = "File Not Found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
+					System.out.println(errMsg);
+					return;
 				}
 				
 				fileServer.send(inputStream, destAddress, destPort);
@@ -176,7 +183,7 @@ public class Server {
 					inputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
-					System.exit(1);
+					return;
 				}
 			} else { // Operation.WRQ
 				
@@ -186,7 +193,14 @@ public class Server {
 					outputStream = new FileOutputStream(file, false);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
-					System.exit(1);
+					// this exception will occur if there is an file not found
+					String errMsg    = "File Not Found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_NOT_FOUND, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
+					System.out.println(errMsg);
+					return;
 				}
 				
 				byte[] serverRes = AckPacketParser.getByteArray(0);
@@ -200,7 +214,7 @@ public class Server {
 					outputStream.close();
 				} catch (IOException e) {
 					e.printStackTrace();
-					System.exit(1);
+					return;
 				}
 				
 				if(!successful) {
@@ -223,16 +237,19 @@ public class Server {
 		@Override
 		public void run() {
 			// read and normalize input
-			String input = scanner.nextLine().trim(); 
-			String normalizedInput = input.toLowerCase();
-			// take action based on input
-			if (normalizedInput.startsWith("shutdown")) {
-				System.out.println("Shutting down receive socket.");
-				networkConnector.close();
-			} else if (normalizedInput.length() > 0) {
-				System.out.println("Command not recognized: " + input);
+			while(scanner.hasNextLine()) {
+				String input = scanner.nextLine().trim(); 
+				String normalizedInput = input.toLowerCase();
+				// take action based on input
+				if (normalizedInput.startsWith("shutdown")) {
+					System.out.println("Shutting down receive socket.");
+					networkConnector.close();
+					isRunning = false;
+					return;
+				} else if (normalizedInput.length() > 0) {
+					System.out.println("Command not recognized: " + input);
+				}
 			}
-			isRunning = false;
 		}
 	}
 }
