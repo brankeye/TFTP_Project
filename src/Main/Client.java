@@ -74,7 +74,7 @@ public class Client {
 		}
 
 		// use fileServer to receive DATA/send ACKs
-		boolean successful = fileServer.receive(outputStream, destAddress, destPort);
+		boolean successful = fileServer.receive(packet, outputStream, destAddress, destPort);
 
 		try {
 			outputStream.close();
