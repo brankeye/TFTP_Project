@@ -140,7 +140,7 @@ public class FileServer {
 						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 							return false;
 						}
-					}
+					} 
 				}
 				
 				if(expectedPort == -1) {
@@ -179,8 +179,19 @@ public class FileServer {
 					try {
 						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
 		 			} catch (IOException e) {
-						e.printStackTrace();
-						System.exit(1);
+		 				//disk full check - error code 3 handle
+		 					if(e.getMessage() != null) {
+								if (e.getMessage().compareTo("No space left on device") == 0 
+										||e.getMessage().compareTo("There is not enough space on the disk") == 0 
+										|| e.getMessage().compareTo("Not enough space")== 0){
+									String errMsg = e.getMessage();
+									int errLength = errMsg.length() + 4; 
+									byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
+									DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+									networkConnector.send(errorPacket);
+							}
+							}
+						
 					}
 				} else  {
 					done = true;
@@ -248,7 +259,7 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 							return false;
 						}
-					}
+					} 
 				}
 				
 				if(expectedPort == -1) {
@@ -287,9 +298,20 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 					try {
 						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
 		 			} catch (IOException e) {
-						e.printStackTrace();
-						System.exit(1);
-					}
+		 				//check if disk is full - handle it
+	 					if(e.getMessage() != null) {
+							if (e.getMessage().compareTo("No space left on device") == 0 
+									||e.getMessage().compareTo("There is not enough space on the disk") == 0 
+									|| e.getMessage().compareTo("Not enough space")== 0){
+								String errMsg = e.getMessage();
+								int errLength = errMsg.length() + 4; 
+								byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
+								DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+								networkConnector.send(errorPacket);
+						}
+						}
+					
+				}
 				} else  {
 					done = true;
 				}	
