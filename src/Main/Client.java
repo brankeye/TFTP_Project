@@ -71,6 +71,16 @@ public class Client {
 			} catch(IOException ex) {}
 			file.delete();
 			return;
+		} catch (IOException e){
+			if (e.getMessage().compareTo("No space left on device") == 0 
+					||e.getMessage().compareTo("There is not enough space on the disk") == 0 
+					|| e.getMessage().compareTo("Not enough space")== 0){
+				String errMsg = e.getMessage();
+				int errLength = errMsg.length() + 4; 
+				byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
+				DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+				networkConnector.send(errorPacket);
+		}
 		}
 
 		// use fileServer to receive DATA/send ACKs
