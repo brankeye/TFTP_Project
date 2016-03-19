@@ -51,17 +51,17 @@ Configuration
 		15 - DUPLICATE_ERROR_PACKET_MODE
 
 Shutdown
-
 Typing 'shutdown' into the Server class' console will terminate it after all current transfers have completed it.
 
 File Storage
-
 By default, files transfered will be stored in the following locations:
 
 Server: "src/Main/ServerStorage"
 Client: "src/Main/ClientStorage"
 
 ** The storage folder for the Client is created automatically when the system is run, but you must create the storage folder for the Server manually. **
+
+** This system overrites files that already exist in the destination's storage folder. **
 
 File List
 
