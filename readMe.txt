@@ -107,11 +107,25 @@ File List
 	PacketReader.java 
 		- Parses and prints packet information
 
-	SimulationMode.java 
+	NetworkSimulationMode.java 
+		- Enum containing the various error simulation modes	
+		
+	PacketSimulationMode.java 
 		- Enum containing the various error simulation modes  
 
 	FileServer.java 
 		- Encapuslates writing and reading files from disk
+		
+	ClientLink.java
+		- Overrides the run() function in Link
+		- Represents a threaded connection between the Client and the ErrorSimulator
+		
+	Link.java
+		- Handles packet and network errors for the ClientLink and ServerLink classes
+	
+	ServerLink.java
+		- Overrides the run() function in Link
+		- Represents a threaded connection between the ErrorSimulator and the Server
 
 Contributors
 
