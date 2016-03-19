@@ -74,7 +74,7 @@ public class Client {
 		}
 
 		// use fileServer to receive DATA/send ACKs
-		boolean successful = fileServer.receive(outputStream, destAddress, destPort);
+		boolean successful = fileServer.receive(packet, outputStream, destAddress, destPort);
 
 		try {
 			outputStream.close();
@@ -102,28 +102,16 @@ public class Client {
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found: " + RELPATH + filename);
 
-			byte[] error = {0, 5, 0, 1};
-			byte[] msg = new String("File not found: " + RELPATH + filename).getBytes();
-			System.arraycopy(error, 4, msg, 0, msg.length);
-			packet = new DatagramPacket(error, error.length, destAddress, destPort);
-			networkConnector.send(packet);
-
-			try {
-				inputStream.close();
-			} catch(IOException ex) {}
-			
-			file.delete();
-
 			return;
 		}
 
 		// send WRQ packet
-		packet = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
+		DatagramPacket wrqPacket = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		
 		int num_transmit_attempts = 0;
 		while (true){
 			num_transmit_attempts ++;
-			networkConnector.send(packet);
+			networkConnector.send(wrqPacket);
 					
 			// wait for ACK packet and validate packet
 			try {
@@ -178,7 +166,7 @@ public class Client {
 
 		// main input loop
 		while (!done) {
-			System.out.println("Enter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
+			System.out.println("\nEnter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.");
 			System.out.print(PROMPT);
 
 			// read and normalize input

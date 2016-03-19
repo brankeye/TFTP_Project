@@ -111,8 +111,8 @@ public class ErrorSimulator {
 			// cannot be RRQ/WRQ/ERROR, they have a default packet targeting system
 			if(netInt % 5 != 1 && netInt % 5 != 2 && netInt % 5 != 0) {
 				// get packet number
-				prompt = "Please select the block number to target (0 and up):";
-				selectedPacketNumber = getIntegerAsInput(prompt, 0, -1);
+				prompt = "Please select the packet number to target (1 and up):";
+				selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
 			}
 			
 			if(netInt > 5) {

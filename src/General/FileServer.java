@@ -55,11 +55,12 @@ public class FileServer {
 			}
 
 			// send DATA packet
-			packet = new DatagramPacket(
+			DatagramPacket dataPacket = new DatagramPacket(
 					DataPacketParser.getByteArray(blockNumber, dataBuffer),
 					numBytes + 4,
 					destAddress, 
 					destPort);
+			boolean sendDataPacket = true;
 			
 			// wait for ACK packet
 			do {
@@ -67,16 +68,20 @@ public class FileServer {
 				do {
 					int num_transmit_attempts = 0;
 					while (true){ // Retransmit
-							num_transmit_attempts++;
-							networkConnector.send(packet);
+						num_transmit_attempts++;
+						if(sendDataPacket) {
+							networkConnector.send(dataPacket);
+							sendDataPacket = false;
+						}
 						try {
 							packet = networkConnector.receive();
 							break;
 						} catch (SocketTimeoutException e) {
 							System.out.println("Fileserver receive ACK timed out");
 							e.printStackTrace();
+							sendDataPacket = true;
 							if (num_transmit_attempts >= Config.MAX_TRANSMITS){
-								System.exit(0);
+								return false;
 							}
 						}
 					}
@@ -117,17 +122,25 @@ public class FileServer {
 		DatagramPacket packet = null;
 		boolean done          = false;
 		int blockNumber       = 1;
+		expectedPort          = -1;
 		
 		while (!done) {
 			
 			// wait for DATA packet and validate
 			do {
-				try {
-					packet = networkConnector.receive();
-				} catch (SocketTimeoutException e) {
-					System.out.println("FileServer receive DATA timed out");
-					e.printStackTrace();
-					System.exit(1);
+				int num_transmit_attempts = 0;
+				while (true){ // Retransmit
+					num_transmit_attempts++;
+					try {
+						packet = networkConnector.receive();
+						break;
+					} catch (SocketTimeoutException e) {
+						System.out.println("FileServer receive DATA timed out");
+						e.printStackTrace();
+						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							return false;
+						}
+					}
 				}
 				
 				if(expectedPort == -1) {
@@ -158,38 +171,151 @@ public class FileServer {
 			boolean duplicateDataPacket = false;
 			if(DataPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
 				duplicateDataPacket = true;
-				blockNumber--;
 			}
-			if (!duplicateDataPacket && packet.getLength() > 3) {
-				try {
-					outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
-	 			} catch (IOException e) {
-					e.printStackTrace();
-					System.exit(1);
+			
+			// Not a duplicate DATA packet
+			if(!duplicateDataPacket) {
+				if (packet.getLength() > 3) {
+					try {
+						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
+		 			} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+				} else  {
+					done = true;
+				}	
+					
+				if (packet.getLength() < 516) {
+					done = true;
 				}
-			} else  {
-				done = true;
-			}	
 				
-			if (packet.getLength() < 516) {
-				done = true;
+				// send ACK packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(blockNumber),
+						4,
+						destAddress, 
+						destPort);
+				
+				blockNumber += 1;	
+			} else {
+				// Acknowledge a duplicate DATA packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(DataPacketParser.getBlockNumber(packet.getData())),
+						4,
+						destAddress, 
+						destPort);
 			}
-			
-			// send ACK packet
-			packet = new DatagramPacket(
-					AckPacketParser.getByteArray(blockNumber),
-					4,
-					destAddress, 
-					destPort);
-			
 			networkConnector.send(packet);
-			
-			blockNumber += 1;		
 		}
 		return true;
 	}
 	
 	public void setExpectedHost(int p) {
 		expectedPort = p;
+	}
+	
+public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, InetAddress destAddress, int destPort) {
+		
+		DatagramPacket packet = null;
+		boolean done          = false;
+		int blockNumber       = 1;
+		expectedPort          = -1;
+		boolean resendRequest = false;
+		
+		while (!done) {
+			
+			// wait for DATA packet and validate
+			do {
+				int num_transmit_attempts = 0;
+				while (true){ // Retransmit
+					
+					if(resendRequest) {
+						networkConnector.send(requestPacket);
+						resendRequest = false;
+					}
+					
+					num_transmit_attempts++;
+					try {
+						packet = networkConnector.receive();
+						break;
+					} catch (SocketTimeoutException e) {
+						System.out.println("FileServer receive DATA timed out");
+						e.printStackTrace();
+						if(blockNumber == 1) { // ie, still trying to send the request
+							resendRequest = true;
+						}
+						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							return false;
+						}
+					}
+				}
+				
+				if(expectedPort == -1) {
+					setExpectedHost(packet.getPort());
+				}
+				
+				if(expectedPort != packet.getPort()) {
+					// recover from ErrorCode 5
+					System.out.println("Received packet with strange TID.");
+					byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.UNKNOWN_TID, "Received packet with bad TID!");
+					DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, packet.getAddress(), packet.getPort());
+					networkConnector.send(errPacket);
+				}
+			} while(expectedPort != packet.getPort());
+			
+			// add error-checking for received packet
+			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
+				System.out.println("Received ERROR packet. Transfer stopped.");
+				return false;
+			} else if (!DataPacketParser.isValid(packet.getData())) {
+				System.out.println("Received invalid DATA packet. Transfer stopped.");
+				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
+				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
+				networkConnector.send(errPacket);
+				return false;
+			}
+			
+			boolean duplicateDataPacket = false;
+			if(DataPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
+				duplicateDataPacket = true;
+			}
+			
+			// Not a duplicate DATA packet
+			if(!duplicateDataPacket) {
+				if (packet.getLength() > 3) {
+					try {
+						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
+		 			} catch (IOException e) {
+						e.printStackTrace();
+						System.exit(1);
+					}
+				} else  {
+					done = true;
+				}	
+					
+				if (packet.getLength() < 516) {
+					done = true;
+				}
+				
+				// send ACK packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(blockNumber),
+						4,
+						destAddress, 
+						destPort);
+				
+				blockNumber += 1;	
+			} else {
+				// Acknowledge a duplicate DATA packet
+				packet = new DatagramPacket(
+						AckPacketParser.getByteArray(DataPacketParser.getBlockNumber(packet.getData())),
+						4,
+						destAddress, 
+						destPort);
+			}
+			networkConnector.send(packet);
+		}
+		return true;
 	}
 }

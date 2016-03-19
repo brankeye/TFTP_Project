@@ -36,16 +36,16 @@ public class ServerLink extends Link {
 				e.printStackTrace();
 				System.exit(1);
 			}
-			if(threadAddress == null) {
-				threadAddress = dpServer.getAddress();
-				threadPort    = dpServer.getPort();
-			}
+			
+			threadAddress = dpServer.getAddress();
+			threadPort    = dpServer.getPort();
 			
 			Operation opcode = PacketParser.getOpcode(dpServer.getData(), dpServer.getLength());
 			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
 				numDataPackets = 0;
 				numAckPackets  = 0;
 			} else {
+				isHit = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }
 			}

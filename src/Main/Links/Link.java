@@ -20,6 +20,7 @@ public abstract class Link implements Runnable {
 	// must track number of data and ack packets that pass through the link
 	int numDataPackets = 0;
 	int numAckPackets  = 0;
+	boolean isHit = false; // for RRQ/WRQ/ERROR
 	
 	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
 		packetSimMode = psm;
@@ -39,21 +40,21 @@ public abstract class Link implements Runnable {
 		Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
 		switch(netSimMode) {
 			case DEFAULT_MODE:                { netConnector.send(sendPacket); return; }
-			case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ)   toss(); return; }
-			case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ)   toss(); return; }
-			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA && numDataPackets == targetPacket) { toss(); return; } break; }
-			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { toss(); return; } break; }
-			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR) toss(); return; }
-			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ)   { delay(); } break; }
-			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ)   { delay(); } break; }
-			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA && numDataPackets == targetPacket) { delay(); } break; }
-			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { delay(); } break; }
-			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR) { delay(); } break; }
-			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ)   { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ)   { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA && numDataPackets == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK  && numAckPackets  == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR) { netConnector.send(sendPacket); delay(); } break; }
+			case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ   && !isHit) { isHit = true; toss(); return; } break; }
+			case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ   && !isHit) { isHit = true; toss(); return; } break; }
+			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { toss(); return; } break; }
+			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { toss(); return; } break; }
+			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR && !isHit) { isHit = true; toss(); return; } break; }
+			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ   && !isHit) { isHit = true; delay(); } break; }
+			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ   && !isHit) { isHit = true; delay(); } break; }
+			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { delay(); } break; }
+			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { delay(); } break; }
+			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR && !isHit) { isHit = true; delay(); } break; }
+			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ   && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ   && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
 			default: break;
 		}
 		netConnector.send(sendPacket); 

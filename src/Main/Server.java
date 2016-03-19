@@ -36,19 +36,26 @@ public class Server {
 		Thread t = new Thread(shutdownHandler);
 		t.start();
 	}
-
+	
 	// sends and receives messages
 	public void sendReceive() {
 		while (isRunning) {
 			// if(wantToStop) break; //there must be a nice way to shut down
 			// your server
 			DatagramPacket datagramPacket = null;
-			try {
-				datagramPacket = networkConnector.receive();
-			} catch (SocketTimeoutException e) {
-				System.out.println("Server main thread timed out");
-				e.printStackTrace();
-				System.exit(1);
+			int num_transmit_attempts = 0;
+			while(true) {
+				num_transmit_attempts++;
+				try {
+					datagramPacket = networkConnector.receive();
+					break;
+				} catch (SocketTimeoutException e) {
+					System.out.println("Server main thread timed out");
+					e.printStackTrace();
+					if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+						return;
+					}
+				}
 			}
 			
 			byte[] data = datagramPacket.getData();
@@ -123,8 +130,14 @@ public class Server {
 						return;
 					}
 				} else {
+					// this exception will occur if there is an access violation
+					String errMsg    = "File not found";
+					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
+					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
+					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+					threadedNetworkConnector.send(errorPacket);
 					System.out.println("File not found");
-					System.exit(1);
+					return;
 				}
 			} else {
 				if (requestOpcode == Operation.WRQ) {
