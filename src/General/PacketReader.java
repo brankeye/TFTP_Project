@@ -16,6 +16,10 @@ public class PacketReader {
 	// reads the contents of a receive packet
 	public void readReceivePacket(DatagramPacket packet) {
 		// print log
+		
+		if (!Config.PRINT_PACKETS) {
+			return;
+		}
 
 		String type = PacketParser.getOpcode(packet.getData(), packet.getLength()).toString();
 
@@ -30,7 +34,10 @@ public class PacketReader {
 	
 	// reads the contents of a send packet
 	public void readSendPacket(DatagramPacket packet) {
-		// print log
+		
+		if (!Config.PRINT_PACKETS) {
+			return;
+		}
 		
 		String type = PacketParser.getOpcode(packet.getData(), packet.getLength()).toString();
 
@@ -42,11 +49,7 @@ public class PacketReader {
 	}
 	
 	private void readPacket(DatagramPacket packet) {
-		
-		if (!Config.PRINT_PACKETS) {
-			return;
-		}
-		
+
 		int length = packet.getLength();
 		System.out.println("Packet length: " + length);
 

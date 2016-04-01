@@ -29,11 +29,13 @@ public class NetworkConnector {
 		byte data[] = new byte[Config.MAX_BYTE_ARR_SIZE];
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		try {
-			System.out.print("\nWaiting to receive a packet...\n");
+			if (Config.PRINT_PACKETS) {
+				System.out.print("\nWaiting to receive a packet...\n");
+			}
 			socket.receive(receivePacket);
 		} catch (IOException e) {
-			System.out.print("IO Exception: likely ");
-			System.out.println("Receive Socket Timed Out.\n" + e);
+			//System.out.print("IO Exception: likely ");
+			//System.out.println("Receive Socket Timed Out.\n" + e);
 			throw new SocketTimeoutException();
 		}
 		

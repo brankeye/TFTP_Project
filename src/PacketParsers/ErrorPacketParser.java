@@ -25,15 +25,10 @@ public class ErrorPacketParser extends PacketParser {
 	}
 
 	public static String getErrorMessage(byte[] data, int length){
-		for (int i = 4; i < length; i++) {
-			if (data[i] == 0) { // If a 0 byte is encountered, stop.
-				if (i != 4) { // Check for 0 length filenames.
-					return new String(data, 2, i - 2);
-				}
-				break;
-			}
+		if (length == 4) {
+			return "Error not specified";
+		} else {
+			return new String(data, 4, length - 4);
 		}
-
-		return "Error Not Specified";
 	}
 }

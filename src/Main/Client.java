@@ -66,7 +66,7 @@ public class Client {
 		try {
 			outputStream = new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
-			System.out.println("Error opening file: "  + e.getMessage());
+			System.out.println("Error: failed to open file: "  + e.getMessage());
 			file.delete();
 			return;
 		}
@@ -81,8 +81,8 @@ public class Client {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+			System.out.println("Error closing file: " + e.getMessage());
+			successful = false;
 		}
 		
 		if(!successful) {
@@ -104,7 +104,7 @@ public class Client {
 		
 		// open local file for reading
 		File file = new File(RELPATH + filename);
-
+		
 		// open input stream
 		try {
 			inputStream = new FileInputStream(file);
@@ -112,7 +112,7 @@ public class Client {
 			System.out.println("Error opening file: " + e.getMessage());
 			return;
 		}
-
+		
 		// send WRQ packet
 		DatagramPacket wrqPacket = new DatagramPacket(wrqBuffer, wrqBuffer.length, destAddress, destPort);
 		
@@ -126,21 +126,25 @@ public class Client {
 				packet = networkConnector.receive();
 				break; // break if successful, otherwise timeout and retransmit
 			} catch (SocketTimeoutException e1) {
-				System.out.println("Client WRQ timed out");
+				System.out.println("WRQ timed out - retrying [" + num_transmit_attempts + "/" + Config.MAX_TRANSMITS + "]");
+				
 				if (num_transmit_attempts >= Config.MAX_TRANSMITS){
-					System.exit(0);
+					System.out.println("Transfer aborted.");
+					return;
 				}
 			}
 		}
+		
 		fileServer.setExpectedHost(packet.getPort());
 
-		if(AckPacketParser.isValid(packet.getData(), 0)) {
+		if (AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
 			fileServer.send(inputStream, destAddress, packet.getPort());
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-			System.out.println("Received ERROR packet. Transfer stopped.");
+			System.out.println("ERROR: " + ErrorPacketParser.getErrorMessage(packet.getData(), packet.getLength()));
+			System.out.println("Transfer stopped.");
 		} else {
-			System.out.println("Received invalid ACK packet. Transfer stopped.");
+			System.out.println("ERROR: invalid ACK packet. Transfer stopped.");
 			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 			DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, packet.getPort());
 			networkConnector.send(errPacket);
@@ -150,8 +154,7 @@ public class Client {
 		try {
 			inputStream.close();
 		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+			System.out.println("Error closing file: " + e.getMessage());
 		}
 	}
 

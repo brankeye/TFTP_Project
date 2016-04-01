@@ -77,16 +77,16 @@ public class FileServer {
 							packet = networkConnector.receive();
 							break;
 						} catch (SocketTimeoutException e) {
-							System.out.println("Fileserver receive ACK timed out");
-							e.printStackTrace();
+							System.out.println("Receive ACK timed out - retrying [" + num_transmit_attempts + "/" + Config.MAX_TRANSMITS + "]");
 							sendDataPacket = true;
 							if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+								System.out.println("Transfer aborted");
 								return false;
 							}
 						}
 					}
 					if(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber) {
-						System.out.println("\nReceived and ignored duplicate ACK.");
+						System.out.println("\nReceived and ignored duplicate ACK (block " + blockNumber + ").");
 					}
 					
 				} while(AckPacketParser.getBlockNumber(packet.getData()) < blockNumber);
@@ -102,10 +102,10 @@ public class FileServer {
 			
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
+				System.out.println("ERROR: " + ErrorPacketParser.getErrorMessage(packet.getData(), packet.getLength()));
 				return false;
 			} else if (!AckPacketParser.isValid(packet.getData(), blockNumber)) {
-				System.out.println("Received invalid ACK packet. Transfer stopped.");
+				System.out.println("ERROR: invalid ACK packet. Transfer aborted.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);
@@ -135,8 +135,7 @@ public class FileServer {
 						packet = networkConnector.receive();
 						break;
 					} catch (SocketTimeoutException e) {
-						System.out.println("FileServer receive DATA timed out");
-						e.printStackTrace();
+						System.out.println("Receive DATA timed out - retrying [" + num_transmit_attempts + "/" + Config.MAX_TRANSMITS + "]");
 						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 							return false;
 						}
@@ -182,8 +181,8 @@ public class FileServer {
 		 				//disk full check - error code 3 handle
 		 					if(e.getMessage() != null) {
 								if (e.getMessage().compareTo("No space left on device") == 0 
-										||e.getMessage().compareTo("There is not enough space on the disk") == 0 
-										|| e.getMessage().compareTo("Not enough space")== 0){
+										|| e.getMessage().compareTo("There is not enough space on the disk") == 0 
+										|| e.getMessage().compareTo("Not enough space") == 0){
 									String errMsg = e.getMessage();
 									int errLength = errMsg.length() + 4; 
 									byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
