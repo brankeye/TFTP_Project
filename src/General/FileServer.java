@@ -163,7 +163,7 @@ public class FileServer {
 			} else if (!DataPacketParser.isValid(packet.getData())) {
 				System.out.println("Received invalid DATA packet. Transfer stopped.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
-				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
+				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, expectedPort);
 				networkConnector.send(errPacket);
 				return false;
 			}
@@ -187,7 +187,7 @@ public class FileServer {
 									String errMsg = e.getMessage();
 									int errLength = errMsg.length() + 4; 
 									byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
-									DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+									DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, expectedPort);
 									networkConnector.send(errorPacket);
 							}
 							}
@@ -206,7 +206,7 @@ public class FileServer {
 						AckPacketParser.getByteArray(blockNumber),
 						4,
 						destAddress, 
-						destPort);
+						expectedPort);
 				
 				blockNumber += 1;	
 			} else {
@@ -215,7 +215,7 @@ public class FileServer {
 						AckPacketParser.getByteArray(DataPacketParser.getBlockNumber(packet.getData())),
 						4,
 						destAddress, 
-						destPort);
+						expectedPort);
 			}
 			networkConnector.send(packet);
 		}
@@ -325,7 +325,7 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 						AckPacketParser.getByteArray(blockNumber),
 						4,
 						destAddress, 
-						destPort);
+						expectedPort);
 				
 				blockNumber += 1;	
 			} else {
@@ -334,7 +334,7 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 						AckPacketParser.getByteArray(DataPacketParser.getBlockNumber(packet.getData())),
 						4,
 						destAddress, 
-						destPort);
+						expectedPort);
 			}
 			networkConnector.send(packet);
 		}

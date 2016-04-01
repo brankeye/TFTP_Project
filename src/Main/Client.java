@@ -39,9 +39,12 @@ public class Client {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		this.destPort = Config.ERR_SIM_PORT;
-		// this.destPort = Config.SERVER_PORT;
-
+		
+		if (Config.USE_ERR_SIM) {
+			this.destPort = Config.ERR_SIM_PORT;
+		} else {
+			this.destPort = Config.SERVER_PORT;
+		}
 	}
 
 	// reads a server-hosted file and writes it locally
@@ -66,16 +69,6 @@ public class Client {
 			System.out.println("Error opening file: "  + e.getMessage());
 			file.delete();
 			return;
-		} catch (IOException e){
-			if (e.getMessage().compareTo("No space left on device") == 0 
-					||e.getMessage().compareTo("There is not enough space on the disk") == 0 
-					|| e.getMessage().compareTo("Not enough space")== 0){
-				String errMsg = e.getMessage();
-				int errLength = errMsg.length() + 4; 
-				byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
-				DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
-				networkConnector.send(errorPacket);
-		}
 		}
 		
 		// send RRQ packet
@@ -140,17 +133,16 @@ public class Client {
 			}
 		}
 		fileServer.setExpectedHost(packet.getPort());
-		// add error checking on received ACK packet
-		
+
 		if(AckPacketParser.isValid(packet.getData(), 0)) {
 			// use fileServer to send DATA/receive ACKs
-			fileServer.send(inputStream, destAddress, destPort);
+			fileServer.send(inputStream, destAddress, packet.getPort());
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 			System.out.println("Received ERROR packet. Transfer stopped.");
 		} else {
 			System.out.println("Received invalid ACK packet. Transfer stopped.");
 			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
-			DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
+			DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, packet.getPort());
 			networkConnector.send(errPacket);
 		}
 		

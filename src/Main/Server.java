@@ -14,6 +14,10 @@ import PacketParsers.ErrorPacketParser;
 import PacketParsers.PacketParser;
 import PacketParsers.RequestPacketParser;
 
+//import java.io.FilePermission;
+//import java.security.AccessControlException;
+//import java.security.AccessController;
+
 /*
 For this iteration, each newly created client connection thread should terminate after it sends 
 the appropriate acknowledgment to the client that requested the connection.
@@ -55,7 +59,7 @@ public class Server {
 					if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 						return;
 					}
-				} 
+				}
 			}
 			
 			byte[] data = datagramPacket.getData();
@@ -89,14 +93,22 @@ public class Server {
 	}
 
 	private class Splitter implements Runnable {
+		
 		DatagramPacket   datagramPacket;
 		NetworkConnector threadedNetworkConnector;
 		FileServer       fileServer;
+		
+		InetAddress destAddress;
+		int destPort;
+		
 		public Splitter(DatagramPacket receivedPacket) {
 			datagramPacket           = receivedPacket;
 			threadedNetworkConnector = new NetworkConnector(true);
 			fileServer               = new FileServer(threadedNetworkConnector);
 			fileServer.setExpectedHost(datagramPacket.getPort());
+			
+			destAddress = datagramPacket.getAddress();
+			destPort    = datagramPacket.getPort();			
 		}
 
 		@Override
@@ -105,46 +117,61 @@ public class Server {
 			byte[] data = datagramPacket.getData();
 			int length  = datagramPacket.getLength();
 
-			InetAddress destAddress = datagramPacket.getAddress();
-			int destPort            = datagramPacket.getPort();
 			
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data, length));
 			System.out.println("File name: " + file.getName());
 
 			Operation requestOpcode = PacketParser.getOpcode(data, datagramPacket.getLength());
+/*
+			System.out.println(file.getAbsolutePath());
 			
+			FilePermission fp = new FilePermission(file.getAbsolutePath(), "write");
+			try {
+				AccessController.checkPermission(fp);
+			} catch (AccessControlException e) {
+				System.out.println("Write Access Violation");
+			}
+			*/
+			/*
+			if (requestOpcode == Operation.WRQ) {
+				
+				// check if file already exists
+				if (file.exists()) {
+					sendErrorPacket(ErrorCode.FILE_EXISTS, "File Exists");
+					return;
+				}
+				
+				// check if write access is granted
+				FilePermission fp = new FilePermission("/src/Main/ServerStorage/", "write");
+				try {
+					AccessController.checkPermission(fp);
+				} catch (AccessControlException e) {
+					sendErrorPacket(ErrorCode.ACCESS_VIOLATION, "Access Violation");
+					System.out.println(e.getMessage());
+					return;
+				}
+				
+			}
+			
+			sendErrorPacket(ErrorCode.UNDEF, "undef");
+			return;*/
+
 			if (!file.exists()) {
 				if (requestOpcode == Operation.WRQ) {
 					try {
 						file.createNewFile();
 					} catch (IOException e) {
-						if(!file.canWrite()){
 						// this exception will occur if there is an access violation
 						String errMsg    = "Access Violation";
 						int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
 						byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.ACCESS_VIOLATION, errMsg);
 						DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
 						threadedNetworkConnector.send(errorPacket);
-						}
-						
-						//check to see if disk is full - error code 3
-						else if(e.getMessage() != null) {
-							if (e.getMessage().compareTo("No space left on device") == 0 
-									||e.getMessage().compareTo("There is not enough space on the disk") == 0 
-									|| e.getMessage().compareTo("Not enough space")== 0){
-								String errMsg = e.getMessage();
-								int errLength = errMsg.length() + 4; 
-								byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
-								DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
-								threadedNetworkConnector.send(errorPacket);
-						}
-						}
 						
 						System.out.println("Thread Exiting");
 						return;
 					}
-					
 				} else {
 					// this exception will occur if the file is not found
 					String errMsg    = "File not found";
@@ -157,19 +184,9 @@ public class Server {
 				}
 			} else {
 				if (requestOpcode == Operation.WRQ) {
-					System.out.println("File exists");
-					
-					// send Error Code 2
-					String errMsg    = "FileExists";
-					int    errLength = errMsg.length() + 4;  // add 4 for the packet type bytes
-					byte[] errData   = ErrorPacketParser.getByteArray(ErrorCode.FILE_EXISTS, errMsg);
-					DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
-					threadedNetworkConnector.send(errorPacket);
-					
-					System.out.println("Thread Exiting");
+					sendErrorPacket(ErrorCode.FILE_EXISTS, "File Exists");
 					return;
 				} 
-				// else if read, carry on
 			}
 
 			
@@ -216,8 +233,6 @@ public class Server {
 					return;
 				}
 				
-			
-				
 				byte[] serverRes = AckPacketParser.getByteArray(0);
 				DatagramPacket sendPacket = new DatagramPacket(serverRes, serverRes.length, 
 						                                       datagramPacket.getAddress(), datagramPacket.getPort());
@@ -237,7 +252,16 @@ public class Server {
 				}
 			}
 			
-		System.out.println("Thread Exiting");
+			System.out.println("Thread Exiting");
+			
+		}
+		
+		private void sendErrorPacket(ErrorCode e, String message) {
+			int    errLength = message.length() + 4;  // add 4 for the packet type bytes
+			byte[] errData   = ErrorPacketParser.getByteArray(e, message);
+			DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
+			threadedNetworkConnector.send(errorPacket);
+			System.out.println("Thread Exiting");
 		}
 	}
 	

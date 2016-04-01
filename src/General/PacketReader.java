@@ -2,6 +2,7 @@ package General;
 
 import java.net.*;
 
+import NetworkTypes.Operation;
 import PacketParsers.*;
 
 public class PacketReader {
@@ -16,8 +17,11 @@ public class PacketReader {
 	public void readReceivePacket(DatagramPacket packet) {
 		// print log
 
- 		System.out.println(name + "\nReceived a packet...");
- 	    System.out.println("From host:  " + packet.getAddress() + ":" + packet.getPort());
+		String type = PacketParser.getOpcode(packet.getData(), packet.getLength()).toString();
+
+		System.out.println(name + "\nReceived " + type + " packet...");
+	    System.out.println("From host:  " + packet.getAddress() + ":" + packet.getPort());
+	    
  	    //System.out.println("Host port: " + packet.getPort());
 
  	    readPacket(packet);
@@ -27,7 +31,10 @@ public class PacketReader {
 	// reads the contents of a send packet
 	public void readSendPacket(DatagramPacket packet) {
 		// print log
-		System.out.println(name + "\nSending a packet...");
+		
+		String type = PacketParser.getOpcode(packet.getData(), packet.getLength()).toString();
+
+		System.out.println(name + "\nSending " + type + " packet...");
 		System.out.println("To host: " + packet.getAddress() + ":" + packet.getPort());
 		//System.out.println("Destination host port: " + packet.getPort());
 		readPacket(packet);
@@ -45,17 +52,17 @@ public class PacketReader {
 
  	    byte[] data = packet.getData();
  	    String str  = "";
+ 	    String type = "UNDEFINED";
  	    
  	    switch(PacketParser.getOpcode(data,length)) {
 			case RRQ:   str = RequestPacketParser.getString(data, length); break;
 			case WRQ:   str = RequestPacketParser.getString(data, length); break;
-			case DATA:  str = DataPacketParser.getString(data, length); break;
+			case DATA:  str = DataPacketParser.getString(data, length);  break;
 			case ACK:   str = AckPacketParser.getString(data, length); break;
 			case ERROR: str = ErrorPacketParser.getString(data, length); break;
 			default:    str = PacketParser.getString(data, length);
  	    }
-
- 	    
+ 	   
  	    if (length > Config.MAX_PRINT_SIZE) {
  	 	    System.out.print("String: '" + str.substring(0,  Config.MAX_PRINT_SIZE).replace("\r\n",  " ") + "...'\n");
  	    } else {
