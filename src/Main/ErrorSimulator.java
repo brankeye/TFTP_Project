@@ -59,7 +59,7 @@ public class ErrorSimulator {
 		// PACKET ERRORS
 		prompt = "Please select a packet error simulation mode:\n"
 			   + "0  - DEFAULT_MODE\n"
-			   + "1  - CORRUPT_OPERATION_MODE\n"
+			   + "1  - CORRUPT_REQUEST_OPERATION_MODE\n"
 			   + "2  - CORRUPT_DATA_BLOCK_NUM_MODE\n"
 			   + "3  - REMOVE_BLOCK_NUM_MODE\n"
 			   + "4  - CORRUPT_CLIENT_TRANSFER_ID_MODE\n"
@@ -77,7 +77,9 @@ public class ErrorSimulator {
 			   + "16 - CORRUPT_DATA_MODE\n"
 			   + "17 - REMOVE_DATA_MODE\n"
 			   + "18 - CORRUPT_ACK_BLOCK_NUM_MODE\n"
-			   + "19 - GROW_DATA_EXCEED_SIZE_MODE\n";
+			   + "19 - GROW_DATA_EXCEED_SIZE_MODE\n"
+			   + "20 - CORRUPT_DATA_OPERATION_MODE\n"
+			   + "21 - CORRUPT_ACK_OPERATION_MODE\n";
 		
 		int userInput = getIntegerAsInput(prompt, 0, PacketSimulationMode.values().length - 1);
 		packetSimMode = PacketSimulationMode.values()[userInput];
