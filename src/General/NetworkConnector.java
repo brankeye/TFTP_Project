@@ -56,10 +56,10 @@ public class NetworkConnector {
 			}
 			
 		} catch (SocketException e) {
-			e.printStackTrace();
+			System.out.println("ERROR: Failed to create socket (1)");
 			System.exit(1);
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println("ERROR: Failed to send packet (1)");
 			System.exit(1);
 		}
 
@@ -76,17 +76,17 @@ public class NetworkConnector {
 		try {
 			socket.setSoTimeout(Config.MAX_TIMEOUT);
 		} catch (SocketException e) {
-			e.printStackTrace();
+			System.out.println("ERROR: Socket timed out");
 			System.exit(1);
 		}
 	}
 	
 	private void initializeSocket(boolean shouldTimeout) {
 		try {
-	       socket = new DatagramSocket();
+	    	socket = new DatagramSocket();
 	    } catch (SocketException se) {   // Can't create the socket.
-	       se.printStackTrace();
-	       System.exit(1);
+	    	System.out.println("ERROR: Failed to create socket (2)");
+	    	System.exit(1);
 	    }
 		
 		if (shouldTimeout) {
@@ -96,10 +96,10 @@ public class NetworkConnector {
 	
 	private void initializeSocket(int receivingPort, boolean shouldTimeout) {
 		try {
-	       socket = new DatagramSocket(receivingPort);
+			socket = new DatagramSocket(receivingPort);
 	    } catch (SocketException se) {   // Can't create the socket.
-	       se.printStackTrace();
-	       System.exit(1);
+	    	System.out.println("ERROR: Failed to create socket (3)");
+	    	System.exit(1);
 	    }
 		
 		if (shouldTimeout) {

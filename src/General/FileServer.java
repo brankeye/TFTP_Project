@@ -137,6 +137,7 @@ public class FileServer {
 					} catch (SocketTimeoutException e) {
 						System.out.println("Receive DATA timed out - retrying [" + num_transmit_attempts + "/" + Config.MAX_TRANSMITS + "]");
 						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							System.out.println("Transfer aborted");
 							return false;
 						}
 					} 
@@ -157,10 +158,10 @@ public class FileServer {
 			
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
+				System.out.println("ERROR: " + ErrorPacketParser.getErrorMessage(packet.getData(), packet.getLength()));
 				return false;
 			} else if (!DataPacketParser.isValid(packet.getData())) {
-				System.out.println("Received invalid DATA packet. Transfer stopped.");
+				System.out.println("Received invalid DATA packet. Transfer aborted.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, expectedPort);
 				networkConnector.send(errPacket);
@@ -276,10 +277,10 @@ public class FileServer {
 			
 			// add error-checking for received packet
 			if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
-				System.out.println("Received ERROR packet. Transfer stopped.");
+				System.out.println("ERROR: " + ErrorPacketParser.getErrorMessage(packet.getData(), packet.getLength()));
 				return false;
 			} else if (!DataPacketParser.isValid(packet.getData())) {
-				System.out.println("Received invalid DATA packet. Transfer stopped.");
+				System.out.println("Received invalid DATA packet. Transfer aborted.");
 				byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad DATA packet!");
 				DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, destPort);
 				networkConnector.send(errPacket);

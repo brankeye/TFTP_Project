@@ -55,8 +55,7 @@ public class PacketReader {
 
  	    byte[] data = packet.getData();
  	    String str  = "";
- 	    String type = "UNDEFINED";
- 	    
+
  	    switch(PacketParser.getOpcode(data,length)) {
 			case RRQ:   str = RequestPacketParser.getString(data, length); break;
 			case WRQ:   str = RequestPacketParser.getString(data, length); break;

@@ -150,9 +150,8 @@ public class Client {
 			fileServer.send(inputStream, destAddress, packet.getPort());
 		} else if(PacketParser.getOpcode(packet.getData(), packet.getLength()) == Operation.ERROR) {
 			System.out.println("ERROR: " + ErrorPacketParser.getErrorMessage(packet.getData(), packet.getLength()));
-			System.out.println("Transfer stopped.");
 		} else {
-			System.out.println("ERROR: invalid ACK packet. Transfer stopped.");
+			System.out.println("ERROR: invalid ACK packet. Transfer aborted.");
 			byte[] errBytes = ErrorPacketParser.getByteArray(ErrorCode.ILLEGAL_OPERATION, "Received bad ACK packet!");
 			DatagramPacket errPacket = new DatagramPacket(errBytes, errBytes.length, destAddress, packet.getPort());
 			networkConnector.send(errPacket);
@@ -178,7 +177,8 @@ public class Client {
 		helptext = "\n  Commands:\n" + 
 					  	  "    read  <filename>        Read a file from the server\n" + 
 					  	  "    write <filename>        Write a file to the server\n" + 
-					  	  "    esim  <0|1|true|false>  Enable or disable use of error simulator\n" + 
+					  	  "    esim  <0|1|true|false>  Enable or disable use of error simulator\n" +
+					  	  "    print <0|1|true|false>  Enable or disable printing of packets\n" +
 					  	  "    ip    [address]         Set server ip address\n" + 
 					  	  "                            use 'localhost' or no parameter work for local server\n" +
 					  	  "    help                    Display this message\n" +
@@ -220,8 +220,10 @@ public class Client {
 				String state = normalizedInput.substring(4, length).trim();
 				if (state.equals("true") || state.equals("1")) {
 					client.enableErrorSim(true);
+					System.out.println("Error simulator enabled");
 				} else if (state.equals("false") || state.equals("0")) {
 					client.enableErrorSim(false);
+					System.out.println("Error simulator disabled");
 				} else {
 					System.out.println("Error - valid settings are: true, false, 0, 1");
 				}
@@ -234,6 +236,17 @@ public class Client {
 				} catch (UnknownHostException e) {
 					System.out.println("Error - invalid ip address. Destination unchanged.");
 					System.out.println("  ip format: xxx.xxx.xxx.xxx or localhost");
+				}
+			} else if (normalizedInput.startsWith("print")) {
+				String state = normalizedInput.substring(5, length).trim();
+				if (state.equals("true") || state.equals("1")) {
+					Config.PRINT_PACKETS = true;
+					System.out.println("Packet printing enabled");
+				} else if (state.equals("false") || state.equals("0")) {
+					Config.PRINT_PACKETS = false;
+					System.out.println("Packet printing disabled");
+				} else {
+					System.out.println("Error - valid settings are: true, false, 0, 1");
 				}
 			} else if (normalizedInput.startsWith("help")) {
 				System.out.println(helptext);
