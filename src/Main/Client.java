@@ -41,6 +41,14 @@ public class Client {
 		}
 		
 		if (Config.USE_ERR_SIM) {
+			enableErrorSim(true);
+		} else {
+			enableErrorSim(false);
+		}
+	}
+	
+	private void enableErrorSim(boolean state) {
+		if (state) {
 			this.destPort = Config.ERR_SIM_PORT;
 		} else {
 			this.destPort = Config.SERVER_PORT;
@@ -179,7 +187,7 @@ public class Client {
 		try {
 			InetAddress ip = InetAddress.getByName(input);
 			client.destAddress = ip;
-			System.out.println("Destination IP address: "+ip);
+			System.out.println("Destination IP address: " + ip);
 		} catch (UnknownHostException e) {
 			System.out.println("You did not enter a valid ip address.\nNow using the default");
 		}
@@ -192,25 +200,46 @@ public class Client {
 			// read and normalize input
 			input = scanner.nextLine().trim();
 			normalizedInput = input.toLowerCase();
+			int length      = input.length();
 			// take action based on input
 			if (normalizedInput.startsWith("read")) {
-				filename = input.substring(4, input.length()).trim();
+				filename = input.substring(4, length).trim();
 				if (filename.length() > 0) {
 					client.read(filename);
 				} else {
 					System.out.println("Error - filename not supplied");
 				}
 			} else if (normalizedInput.startsWith("write")) {
-				filename = input.substring(5, input.length()).trim();
+				filename = input.substring(5, length).trim();
 				if (filename.length() > 0) {
 					client.write(filename);
 				} else {
 					System.out.println("Error - filename not supplied");
 				}
+			} else if (normalizedInput.startsWith("esim")) {
+				String state = normalizedInput.substring(4, length).trim();
+				System.out.println(state);
+				if (state.equals("true") || state.equals("1")) {
+					client.enableErrorSim(true);
+				} else if (state.equals("false") || state.equals("0")) {
+					client.enableErrorSim(false);
+				} else {
+					System.out.println("Error - valid settings are: true, false, 0, 1");
+				}
+			} else if (normalizedInput.startsWith("ip")) {
+				String address = normalizedInput.substring(2, length).trim();
+				try {
+					InetAddress ip = InetAddress.getByName(address);
+					client.destAddress = ip;
+					System.out.println("Destination IP set to " + ip);
+				} catch (UnknownHostException e) {
+					System.out.println("Error - invalid ip address. Destination unchanged.");
+					System.out.println("  ip format: xxx.xxx.xxx.xxx or localhost");
+				}
 			} else if (normalizedInput.startsWith("quit")) {
 				System.out.println("Quitting");
 				done = true;
-			} else if (normalizedInput.length() > 0) {
+			} else if (length > 0) {
 				System.out.println("Command not recognized: " + input);
 				System.out.println(helptext);
 			}
