@@ -175,22 +175,22 @@ public class Client {
 		String filename = "";
 		String helptext = "\nEnter \"read [filename]\" to read a file from the server, or \"write [filename]\" to write one.";
 
+		helptext = "\n  Commands:\n" + 
+					  	  "    read  <filename>        Read a file from the server\n" + 
+					  	  "    write <filename>        Write a file to the server\n" + 
+					  	  "    esim  <0|1|true|false>  Enable or disable use of error simulator\n" + 
+					  	  "    ip    [address]         Set server ip address\n" + 
+					  	  "                            use 'localhost' or no parameter work for local server\n" +
+					  	  "    help                    Display this message\n" +
+					  	  "    quit                    Terminate client\n";
+		
 		System.out.println(" _____   _____   _____   _____     _     _____ ");
 		System.out.println("|_   _| |  ___| |_   _| |  _  |   / |   |__   /");
 		System.out.println("  | |   | |___    | |   | |_| |  /  |      / / ");
 		System.out.println("  | |   |  ___|   | |   |  ___|   | |     / /  ");
 		System.out.println("  | |   | |       | |   | |      _| |_   / /   ");
 		System.out.println("  |_|   |_|       |_|   |_|     |_____| /_/    ");
-		System.out.println("");
-		System.out.println("Enter a destination IP address and press Enter.");
-		input = scanner.nextLine();
-		try {
-			InetAddress ip = InetAddress.getByName(input);
-			client.destAddress = ip;
-			System.out.println("Destination IP address: " + ip);
-		} catch (UnknownHostException e) {
-			System.out.println("You did not enter a valid ip address.\nNow using the default");
-		}
+		
 		System.out.println(helptext);
 		
 		// main input loop
@@ -218,7 +218,6 @@ public class Client {
 				}
 			} else if (normalizedInput.startsWith("esim")) {
 				String state = normalizedInput.substring(4, length).trim();
-				System.out.println(state);
 				if (state.equals("true") || state.equals("1")) {
 					client.enableErrorSim(true);
 				} else if (state.equals("false") || state.equals("0")) {
@@ -236,12 +235,13 @@ public class Client {
 					System.out.println("Error - invalid ip address. Destination unchanged.");
 					System.out.println("  ip format: xxx.xxx.xxx.xxx or localhost");
 				}
+			} else if (normalizedInput.startsWith("help")) {
+				System.out.println(helptext);
 			} else if (normalizedInput.startsWith("quit")) {
 				System.out.println("Quitting");
 				done = true;
 			} else if (length > 0) {
-				System.out.println("Command not recognized: " + input);
-				System.out.println(helptext);
+				System.out.println("Command not recognized: " + input + ". Type help for list of commands.");
 			}
 		}
 

@@ -179,17 +179,17 @@ public class FileServer {
 						outputStream.write(DataPacketParser.getData(packet.getData(), packet.getLength()), 0, packet.getLength() - 4);
 		 			} catch (IOException e) {
 		 				//disk full check - error code 3 handle
-		 					if(e.getMessage() != null) {
-								if (e.getMessage().compareTo("No space left on device") == 0 
-										|| e.getMessage().compareTo("There is not enough space on the disk") == 0 
-										|| e.getMessage().compareTo("Not enough space") == 0){
-									String errMsg = e.getMessage();
-									int errLength = errMsg.length() + 4; 
-									byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
-									DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, expectedPort);
-									networkConnector.send(errorPacket);
+	 					if(e.getMessage() != null) {
+							if (e.getMessage().compareTo("No space left on device") == 0 
+									|| e.getMessage().compareTo("There is not enough space on the disk") == 0 
+									|| e.getMessage().compareTo("Not enough space") == 0){
+								String errMsg = e.getMessage();
+								int errLength = errMsg.length() + 4; 
+								byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
+								DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, expectedPort);
+								networkConnector.send(errorPacket);
 							}
-							}
+						}
 						
 					}
 				} else  {
@@ -250,12 +250,12 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 						packet = networkConnector.receive();
 						break;
 					} catch (SocketTimeoutException e) {
-						System.out.println("FileServer receive DATA timed out");
-						e.printStackTrace();
+						System.out.println("Receive DATA timed out - retrying [" + num_transmit_attempts + "/" + Config.MAX_TRANSMITS + "]");
 						if(blockNumber == 1) { // ie, still trying to send the request
 							resendRequest = true;
 						}
 						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							System.out.println("Transfer aborted");
 							return false;
 						}
 					} 
@@ -300,14 +300,14 @@ public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, 
 		 				//check if disk is full - handle it
 	 					if(e.getMessage() != null) {
 							if (e.getMessage().compareTo("No space left on device") == 0 
-									||e.getMessage().compareTo("There is not enough space on the disk") == 0 
-									|| e.getMessage().compareTo("Not enough space")== 0){
+									|| e.getMessage().compareTo("There is not enough space on the disk") == 0 
+									|| e.getMessage().compareTo("Not enough space")== 0) {
 								String errMsg = e.getMessage();
 								int errLength = errMsg.length() + 4; 
 								byte[] errData = ErrorPacketParser.getByteArray(ErrorCode.DISK_FULL, errMsg);
 								DatagramPacket errorPacket = new DatagramPacket(errData, errLength, destAddress, destPort);
 								networkConnector.send(errorPacket);
-						}
+							}
 						}
 					
 				}
