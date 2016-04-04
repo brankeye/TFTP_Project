@@ -104,18 +104,10 @@ public abstract class Link implements Runnable {
 				break;
 			}
 			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { 
-				if(!isHitPack && (opcode == Operation.DATA || opcode == Operation.ACK) && numDataPackets == targetPacket || numAckPackets == targetPacket) {
-					isHitPack = true;
-					return handleCorruptClientTransferIDMode(simPacket, address, port); 
-				}
-				break;
+				return handleCorruptClientTransferIDMode(simPacket, address, port);
 			}
 			case CORRUPT_SERVER_TRANSFER_ID_MODE: { 
-				if(!isHitPack && (opcode == Operation.DATA || opcode == Operation.ACK) && numDataPackets == targetPacket || numAckPackets == targetPacket) {
-					isHitPack = true;
-					return handleCorruptServerTransferIDMode(simPacket, address, port); 
-				}
-				break;
+				return handleCorruptServerTransferIDMode(simPacket, address, port); 
 			}
 			case APPEND_PACKET_MODE:              { 
 				return handleAppendPacketMode(simPacket, address, port); 

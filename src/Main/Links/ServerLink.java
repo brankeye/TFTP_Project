@@ -41,10 +41,10 @@ public class ServerLink extends Link {
 			
 			Operation opcode = PacketParser.getOpcode(dpServer.getData(), dpServer.getLength());
 			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+				isHitPack = false;
 				numDataPackets = 0;
 				numAckPackets  = 0;
 			} else {
-				isHitPack = false;
 				isHitNet = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }

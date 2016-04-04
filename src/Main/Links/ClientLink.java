@@ -53,11 +53,11 @@ public class ClientLink extends Link {
 			Operation opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
 			DatagramPacket sendPacket;
 			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+				isHitPack = false;
 				numDataPackets = 0;
 				numAckPackets  = 0;
 				sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
 			} else {
-				isHitPack = false;
 				isHitNet = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }
