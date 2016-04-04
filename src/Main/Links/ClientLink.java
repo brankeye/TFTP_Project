@@ -64,7 +64,8 @@ public class ClientLink extends Link {
 				sendPacket = handleSimulationModes(dpClient, serverLink.getThreadAddress(), serverLink.getThreadPort());
 			}
 			
-			if(packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+			if(!isHitPack && packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE && numAckPackets == targetPacket || numDataPackets == targetPacket) {
+				isHitPack = true;
 				badConnector.send(sendPacket);
 				try {
 					badConnector.receive();

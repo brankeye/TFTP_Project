@@ -51,7 +51,8 @@ public class ServerLink extends Link {
 			}
 			
 			DatagramPacket sendPacket = handleSimulationModes(dpServer, clientLink.getClientAddress(), clientLink.getClientPort());
-			if(packetSimMode == PacketSimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE) {
+			if(!isHitPack && packetSimMode == PacketSimulationMode.CORRUPT_SERVER_TRANSFER_ID_MODE && numAckPackets == targetPacket || numDataPackets == targetPacket) {
+				isHitPack = true;
 				badConnector.send(sendPacket);
 				try {
 					badConnector.receive();
