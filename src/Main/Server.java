@@ -51,7 +51,7 @@ public class Server {
 					break;
 				} catch (SocketTimeoutException e) {
 					System.out.println("Server main thread timed out");
-					e.printStackTrace();
+					//e.printStackTrace();
 					if (num_transmit_attempts >= Config.MAX_TRANSMITS){
 						return;
 					}
@@ -84,6 +84,12 @@ public class Server {
 
 	public static void main(String[] args) {
 		Server server = new Server();
+		
+		try {
+			System.out.println("Server IP: " + InetAddress.getLocalHost().getHostAddress());
+		} catch (UnknownHostException e) {
+			System.out.println("Failed to retreive Server IP Address");
+		}
 		server.initialize();
 		server.sendReceive();
 	}
@@ -117,6 +123,12 @@ public class Server {
 			// verify the filename is good
 			File file = new File(RELPATH + RequestPacketParser.getFilename(data, length));
 			System.out.println("File name: " + file.getName());
+			//System.out.println("File: " + file.toPath());
+			//System.out.println("File: " + file.toPath());
+			//System.out.println("File: " + file.getAbsolutePath());
+			
+			String filename = RELPATH + file.getName();
+			file = new File(filename);
 
 			Operation requestOpcode = PacketParser.getOpcode(data, datagramPacket.getLength());
 
