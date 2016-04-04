@@ -108,20 +108,34 @@ public class ErrorSimulator {
 		networkSimMode = NetworkSimulationMode.values()[userInput];
 		System.out.println("Selected " + networkSimMode.toString() + "\n");
 		
+		boolean askPacketNumber = false;
+		boolean askPacketDelay  = false;
 		int netInt = networkSimMode.ordinal();
+		
+		if(packetSimMode != PacketSimulationMode.DEFAULT_MODE) {
+			askPacketNumber = true;
+		}
 		if(netInt != 0) {
 			// cannot be RRQ/WRQ/ERROR, they have a default packet targeting system
-			if(netInt % 5 != 1 && netInt % 5 != 2 && netInt % 5 != 0) {
-				// get packet number
-				prompt = "Please select the packet number to target (1 and up):";
-				selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
+			if(!askPacketNumber && netInt % 5 != 1 && netInt % 5 != 2 && netInt % 5 != 0) {
+				askPacketNumber = true;
 			}
 			
 			if(netInt > 5) {
-				// get amount to delay
-				prompt = "Please select the packet delay/duplication spacing (ms):";
-				delayAmount = getIntegerAsInput(prompt, 0, -1);
+				askPacketDelay = true;
 			}
+		}
+		
+		if(askPacketNumber) {
+			// get packet number
+			prompt = "Please select the packet number to target (1 and up):";
+			selectedPacketNumber = getIntegerAsInput(prompt, 1, -1);
+		}
+		
+		if(askPacketDelay) {
+			// get amount to delay
+			prompt = "Please select the packet delay/duplication spacing (ms):";
+			delayAmount = getIntegerAsInput(prompt, 0, -1);
 		}
 		
 		System.out.println("Packet Error Simulation:  using " + packetSimMode.toString());

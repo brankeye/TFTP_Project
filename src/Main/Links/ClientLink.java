@@ -45,7 +45,6 @@ public class ClientLink extends Link {
 			} catch (SocketTimeoutException e) {
 				System.out.println("ErrorSimulator ClientLink timed out");
 				e.printStackTrace();
-				System.exit(1);
 			}
 			
 			clientAddress = dpClient.getAddress();
@@ -54,24 +53,25 @@ public class ClientLink extends Link {
 			Operation opcode = PacketParser.getOpcode(dpClient.getData(), dpClient.getLength());
 			DatagramPacket sendPacket;
 			if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+				isHitPack = false;
 				numDataPackets = 0;
 				numAckPackets  = 0;
 				sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
 			} else {
-				isHit = false;
+				isHitNet = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }
 				sendPacket = handleSimulationModes(dpClient, serverLink.getThreadAddress(), serverLink.getThreadPort());
 			}
 			
-			if(packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE) {
+			if(!isHitPack && packetSimMode == PacketSimulationMode.CORRUPT_CLIENT_TRANSFER_ID_MODE && numAckPackets == targetPacket || numDataPackets == targetPacket) {
+				isHitPack = true;
 				badConnector.send(sendPacket);
 				try {
 					badConnector.receive();
 				} catch (SocketTimeoutException e) {
 					System.out.println("ErrorSimulator ClientLink badConnector timed out");
 					e.printStackTrace();
-					System.exit(1);
 				}
 			}
 			handleSending(serverConnector, sendPacket);
