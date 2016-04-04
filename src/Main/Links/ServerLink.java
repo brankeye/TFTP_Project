@@ -45,7 +45,8 @@ public class ServerLink extends Link {
 				numDataPackets = 0;
 				numAckPackets  = 0;
 			} else {
-				isHit = false;
+				isHitPack = false;
+				isHitNet = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }
 			}

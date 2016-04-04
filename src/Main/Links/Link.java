@@ -20,7 +20,8 @@ public abstract class Link implements Runnable {
 	// must track number of data and ack packets that pass through the link
 	int numDataPackets = 0;
 	int numAckPackets  = 0;
-	boolean isHit = false; // for RRQ/WRQ/ERROR
+	boolean isHitPack = false; // for packet errors on RRQ/WRQ/DATA/ACK
+	boolean isHitNet = false; // for network errors on RRQ/WRQ/ERROR
 	
 	public Link(PacketSimulationMode psm, NetworkSimulationMode nsm, int d, int t) {
 		packetSimMode = psm;
@@ -40,21 +41,21 @@ public abstract class Link implements Runnable {
 		Operation opcode = PacketParser.getOpcode(sendPacket.getData(), sendPacket.getLength());
 		switch(netSimMode) {
 			case DEFAULT_MODE:                { netConnector.send(sendPacket); return; }
-			case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ   && !isHit) { isHit = true; toss(); return; } break; }
-			case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ   && !isHit) { isHit = true; toss(); return; } break; }
+			case LOSE_RRQ_PACKET_MODE:        { if(opcode == Operation.RRQ   && !isHitNet) { isHitNet = true; toss(); return; } break; }
+			case LOSE_WRQ_PACKET_MODE:        { if(opcode == Operation.WRQ   && !isHitNet) { isHitNet = true; toss(); return; } break; }
 			case LOSE_DATA_PACKET_MODE:       { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { toss(); return; } break; }
 			case LOSE_ACK_PACKET_MODE:        { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { toss(); return; } break; }
-			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR && !isHit) { isHit = true; toss(); return; } break; }
-			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ   && !isHit) { isHit = true; delay(); } break; }
-			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ   && !isHit) { isHit = true; delay(); } break; }
+			case LOSE_ERROR_PACKET_MODE:      { if(opcode == Operation.ERROR && !isHitNet) { isHitNet = true; toss(); return; } break; }
+			case DELAY_RRQ_PACKET_MODE:       { if(opcode == Operation.RRQ   && !isHitNet) { isHitNet = true; delay(); } break; }
+			case DELAY_WRQ_PACKET_MODE:		  { if(opcode == Operation.WRQ   && !isHitNet) { isHitNet = true; delay(); } break; }
 			case DELAY_DATA_PACKET_MODE:      { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { delay(); } break; }
 			case DELAY_ACK_PACKET_MODE:       { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { delay(); } break; }
-			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR && !isHit) { isHit = true; delay(); } break; }
-			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ   && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ   && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
+			case DELAY_ERROR_PACKET_MODE:     { if(opcode == Operation.ERROR && !isHitNet) { isHitNet = true; delay(); } break; }
+			case DUPLICATE_RRQ_PACKET_MODE:   { if(opcode == Operation.RRQ   && !isHitNet) { isHitNet = true; netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_WRQ_PACKET_MODE:   { if(opcode == Operation.WRQ   && !isHitNet) { isHitNet = true; netConnector.send(sendPacket); delay(); } break; }
 			case DUPLICATE_DATA_PACKET_MODE:  { if(opcode == Operation.DATA  && numDataPackets == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
 			case DUPLICATE_ACK_PACKET_MODE:   { if(opcode == Operation.ACK   && numAckPackets  == targetPacket) { netConnector.send(sendPacket); delay(); } break; }
-			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR && !isHit) { isHit = true; netConnector.send(sendPacket); delay(); } break; }
+			case DUPLICATE_ERROR_PACKET_MODE: { if(opcode == Operation.ERROR && !isHitNet) { isHitNet = true; netConnector.send(sendPacket); delay(); } break; }
 			default: break;
 		}
 		netConnector.send(sendPacket); 
@@ -77,35 +78,135 @@ public abstract class Link implements Runnable {
 	// returns the modified datagrampacket
 	public DatagramPacket handleSimulationModes(DatagramPacket simPacket, InetAddress address, int port) {
 		// don't mess with the error packets
-		if(PacketParser.getOpcode(simPacket.getData(), simPacket.getLength()) == Operation.ERROR) {
+		Operation opcode = PacketParser.getOpcode(simPacket.getData(), simPacket.getLength());
+		if(opcode == Operation.ERROR) {
 			return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port);
 		}
 		
 		switch(packetSimMode) {
 			case DEFAULT_MODE:                    { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
-			case CORRUPT_REQUEST_OPERATION_MODE:  { return handleCorruptRequestOperationMode(simPacket, address, port); }
-			case CORRUPT_DATA_BLOCK_NUM_MODE:     { return handleCorruptDataBlockNumMode(simPacket, address, port); }
-			case REMOVE_BLOCK_NUM_MODE:           { return handleRemoveBlockNumMode(simPacket, address, port); }
-			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { return handleCorruptClientTransferIDMode(simPacket, address, port); }
-			case CORRUPT_SERVER_TRANSFER_ID_MODE: { return handleCorruptServerTransferIDMode(simPacket, address, port); }
-			case APPEND_PACKET_MODE:              { return handleAppendPacketMode(simPacket, address, port); }
-			case SHRINK_PACKET_MODE:              { return handleShrinkPacketMode(simPacket, address, port); }
-			case CORRUPT_FILENAME_MODE:           { return handleCorruptFilenameMode(simPacket, address, port); }
-			case CORRUPT_TRANSFER_MODE:           { return handleCorruptTransferMode(simPacket, address, port); }
-			case CORRUPT_FILENAME_DELIMITER_MODE: { return handleCorruptFilenameDelimiterMode(simPacket, address, port); }
-			case CORRUPT_TRANSFER_DELIMITER_MODE: { return handleCorruptTransferDelimiterMode(simPacket, address, port); }
-			case REMOVE_FILENAME_MODE:            { return handleRemoveFilenameMode(simPacket, address, port); }
-			case REMOVE_TRANSFER_MODE:            { return handleRemoveTransferMode(simPacket, address, port); }
-			case REMOVE_FILENAME_DELIMITER_MODE:  { return handleRemoveFilenameDelimiterMode(simPacket, address, port); }
-			case REMOVE_TRANSFER_DELIMITER_MODE:  { return handleRemoveTransferDelimiterMode(simPacket, address, port); }
-			case CORRUPT_DATA_MODE:               { return handleCorruptDataMode(simPacket, address, port); }
-			case REMOVE_DATA_MODE:                { return handleRemoveDataMode(simPacket, address, port); }
-			case CORRUPT_ACK_BLOCK_NUM_MODE:      { return handleCorruptAckBlockNumMode(simPacket, address, port); }
-			case GROW_DATA_EXCEED_SIZE_MODE:      { return handleGrowDataExceedSizeMode(simPacket, address, port); }
-			case CORRUPT_DATA_OPERATION_MODE:     { return handleCorruptDataOperationMode(simPacket, address, port); }
-			case CORRUPT_ACK_OPERATION_MODE:      { return handleCorruptAckOperationMode(simPacket, address, port); }
-			default: return null;
+			case CORRUPT_REQUEST_OPERATION_MODE:  { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+					return handleCorruptRequestOperationMode(simPacket, address, port);
+				}
+				break;
+			}
+			case CORRUPT_DATA_BLOCK_NUM_MODE:     {
+				if(opcode == Operation.DATA && numDataPackets == targetPacket) {
+					return handleCorruptDataBlockNumMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_BLOCK_NUM_MODE:           {
+				if((opcode == Operation.DATA || opcode == Operation.ACK) && numDataPackets == targetPacket) {
+					return handleRemoveBlockNumMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { 
+				if(!isHitPack && (opcode == Operation.DATA || opcode == Operation.ACK) && numDataPackets == targetPacket || numAckPackets == targetPacket) {
+					isHitPack = true;
+					return handleCorruptClientTransferIDMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_SERVER_TRANSFER_ID_MODE: { 
+				if(!isHitPack && (opcode == Operation.DATA || opcode == Operation.ACK) && numDataPackets == targetPacket || numAckPackets == targetPacket) {
+					isHitPack = true;
+					return handleCorruptServerTransferIDMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case APPEND_PACKET_MODE:              { 
+				return handleAppendPacketMode(simPacket, address, port); 
+			}
+			case SHRINK_PACKET_MODE:              { 
+				return handleShrinkPacketMode(simPacket, address, port); 
+			}
+			case CORRUPT_FILENAME_MODE:           { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+					return handleCorruptFilenameMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_TRANSFER_MODE:           {
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) { 
+					return handleCorruptTransferMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_FILENAME_DELIMITER_MODE: { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) { 
+					return handleCorruptFilenameDelimiterMode(simPacket, address, port);
+				}
+				break;
+			}
+			case CORRUPT_TRANSFER_DELIMITER_MODE: {
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+					return handleCorruptTransferDelimiterMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_FILENAME_MODE:            { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) { 
+					return handleRemoveFilenameMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_TRANSFER_MODE:            { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) {
+					return handleRemoveTransferMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_FILENAME_DELIMITER_MODE:  { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) { 
+					return handleRemoveFilenameDelimiterMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_TRANSFER_DELIMITER_MODE:  { 
+				if(opcode == Operation.RRQ || opcode == Operation.WRQ) { 
+					return handleRemoveTransferDelimiterMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_DATA_MODE:               { 
+				if(opcode == Operation.DATA && numDataPackets == targetPacket) {
+					return handleCorruptDataMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case REMOVE_DATA_MODE:                { 
+				if(opcode == Operation.DATA && numDataPackets == targetPacket) {
+					return handleRemoveDataMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_ACK_BLOCK_NUM_MODE:      { 
+				if(opcode == Operation.ACK && numAckPackets == targetPacket) {
+					return handleCorruptAckBlockNumMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case GROW_DATA_EXCEED_SIZE_MODE:      { 
+				return handleGrowDataExceedSizeMode(simPacket, address, port); 
+			}
+			case CORRUPT_DATA_OPERATION_MODE:     { 
+				if(opcode == Operation.DATA && numDataPackets == targetPacket) {
+					return handleCorruptDataOperationMode(simPacket, address, port); 
+				}
+				break;
+			}
+			case CORRUPT_ACK_OPERATION_MODE:      { 
+				if(opcode == Operation.ACK && numAckPackets == targetPacket) {
+					return handleCorruptAckOperationMode(simPacket, address, port); 
+				}
+				break;
+			}
+			default: break;
 		}
+		return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port);
 	}
 		
 	// 1 - changes the Operation to an invalid one in all packets

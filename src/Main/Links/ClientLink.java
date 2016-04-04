@@ -58,7 +58,8 @@ public class ClientLink extends Link {
 				numAckPackets  = 0;
 				sendPacket = handleSimulationModes(dpClient, serverAddress, serverPort);
 			} else {
-				isHit = false;
+				isHitPack = false;
+				isHitNet = false;
 				if(opcode == Operation.DATA) { numDataPackets++; }
 				else if(opcode == Operation.ACK) { numAckPackets++; }
 				sendPacket = handleSimulationModes(dpClient, serverLink.getThreadAddress(), serverLink.getThreadPort());
