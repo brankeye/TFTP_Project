@@ -83,7 +83,7 @@ public abstract class Link implements Runnable {
 		
 		switch(packetSimMode) {
 			case DEFAULT_MODE:                    { return new DatagramPacket(simPacket.getData(), simPacket.getLength(), address, port); }
-			case CORRUPT_OPERATION_MODE:          { return handleCorruptOperationMode(simPacket, address, port); }
+			case CORRUPT_REQUEST_OPERATION_MODE:  { return handleCorruptRequestOperationMode(simPacket, address, port); }
 			case CORRUPT_DATA_BLOCK_NUM_MODE:     { return handleCorruptDataBlockNumMode(simPacket, address, port); }
 			case REMOVE_BLOCK_NUM_MODE:           { return handleRemoveBlockNumMode(simPacket, address, port); }
 			case CORRUPT_CLIENT_TRANSFER_ID_MODE: { return handleCorruptClientTransferIDMode(simPacket, address, port); }
@@ -102,16 +102,19 @@ public abstract class Link implements Runnable {
 			case REMOVE_DATA_MODE:                { return handleRemoveDataMode(simPacket, address, port); }
 			case CORRUPT_ACK_BLOCK_NUM_MODE:      { return handleCorruptAckBlockNumMode(simPacket, address, port); }
 			case GROW_DATA_EXCEED_SIZE_MODE:      { return handleGrowDataExceedSizeMode(simPacket, address, port); }
+			case CORRUPT_DATA_OPERATION_MODE:     { return handleCorruptDataOperationMode(simPacket, address, port); }
+			case CORRUPT_ACK_OPERATION_MODE:      { return handleCorruptAckOperationMode(simPacket, address, port); }
 			default: return null;
 		}
 	}
 		
 	// 1 - changes the Operation to an invalid one in all packets
-	private DatagramPacket handleCorruptOperationMode(DatagramPacket simPacket, InetAddress address, int port) {
+	private DatagramPacket handleCorruptRequestOperationMode(DatagramPacket simPacket, InetAddress address, int port) {
 		byte[] data   = simPacket.getData();
 		int    length = simPacket.getLength();
 		
-		if(length >= 2) {
+		Operation opcode = PacketParser.getOpcode(data, length);
+		if(length >= 2 && opcode == Operation.RRQ || opcode == Operation.WRQ) {
 			data[0] = 9;
 			data[1] = 9;
 		}
@@ -369,5 +372,33 @@ public abstract class Link implements Runnable {
 			newData[k] = -1;
 		}
 		return new DatagramPacket(newData, newData.length, address, port);
+	}
+	
+	// 20 Corrupts DATA opcode
+	private DatagramPacket handleCorruptDataOperationMode(DatagramPacket simPacket, InetAddress address, int port) {
+		byte[] data   = simPacket.getData();
+		int    length = simPacket.getLength();
+		
+		Operation opcode = PacketParser.getOpcode(data, length);
+		if(length >= 2 && opcode == Operation.DATA) {
+			data[0] = 9;
+			data[1] = 9;
+		}
+		
+		return new DatagramPacket(data, length, address, port);
+	}
+	
+	// 21 Corrupts ACK opcode
+	private DatagramPacket handleCorruptAckOperationMode(DatagramPacket simPacket, InetAddress address, int port) {
+		byte[] data   = simPacket.getData();
+		int    length = simPacket.getLength();
+		
+		Operation opcode = PacketParser.getOpcode(data, length);
+		if(length >= 2 && opcode == Operation.ACK) {
+			data[0] = 9;
+			data[1] = 9;
+		}
+		
+		return new DatagramPacket(data, length, address, port);
 	}
 }

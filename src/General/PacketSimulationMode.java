@@ -7,7 +7,7 @@ public enum PacketSimulationMode {
 	DEFAULT_MODE("Default"),
 	
 	// General Errors (effects 2 or more packet types)
-	CORRUPT_OPERATION_MODE("Corrupt Operation"), // corrupt all OPCODES
+	CORRUPT_REQUEST_OPERATION_MODE("Corrupt Request Operation"), // corrupt all OPCODES
 	CORRUPT_DATA_BLOCK_NUM_MODE("Corrupt Data Block Number"),
 	
 	REMOVE_BLOCK_NUM_MODE("Remove Block Number"),
@@ -15,8 +15,8 @@ public enum PacketSimulationMode {
 	CORRUPT_CLIENT_TRANSFER_ID_MODE("Corrupt Client Transfer ID"), // corrupt the ports
 	CORRUPT_SERVER_TRANSFER_ID_MODE("Corrupt Server Transfer ID"),
 	
-	APPEND_PACKET_MODE("Append Packet Mode"),
-	SHRINK_PACKET_MODE("Append Packet Mode"),
+	APPEND_PACKET_MODE("Append Packet"),
+	SHRINK_PACKET_MODE("Append Packet"),
 	
 	// RRQ/WRQ Errors
 	CORRUPT_FILENAME_MODE("Corrupt Filename"),
@@ -33,8 +33,11 @@ public enum PacketSimulationMode {
 	CORRUPT_DATA_MODE("Corrupt Data"),
 	REMOVE_DATA_MODE("Remove Data"),
 	
-	CORRUPT_ACK_BLOCK_NUM_MODE("Corrupt Ack Block Num Mode"),
-	GROW_DATA_EXCEED_SIZE_MODE("Grow Data Exceed Size Mode");
+	CORRUPT_ACK_BLOCK_NUM_MODE("Corrupt Ack Block Num"),
+	GROW_DATA_EXCEED_SIZE_MODE("Grow Data Exceed Size"),
+	
+	CORRUPT_DATA_OPERATION_MODE("Corrupt Data Operation"),
+	CORRUPT_ACK_OPERATION_MODE("Corrup Ack Operation");
 	
     private final String text;
 
