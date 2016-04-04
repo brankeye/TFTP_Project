@@ -225,7 +225,7 @@ public class FileServer {
 		expectedPort = p;
 	}
 	
-public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, InetAddress destAddress, int destPort) {
+	public boolean receive(DatagramPacket requestPacket, OutputStream outputStream, InetAddress destAddress, int destPort) {
 		
 		DatagramPacket packet = null;
 		boolean done          = false;

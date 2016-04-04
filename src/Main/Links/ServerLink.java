@@ -34,7 +34,6 @@ public class ServerLink extends Link {
 			} catch (SocketTimeoutException e) {
 				System.out.println("ErrorSimulator ServerLink timed out");
 				e.printStackTrace();
-				System.exit(1);
 			}
 			
 			threadAddress = dpServer.getAddress();
@@ -59,7 +58,6 @@ public class ServerLink extends Link {
 				} catch (SocketTimeoutException e) {
 					System.out.println("ErrorSimulator ServerLink badConnector timed out");
 					e.printStackTrace();
-					System.exit(1);
 				}
 			}
 			handleSending(clientConnector, sendPacket);

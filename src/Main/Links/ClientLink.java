@@ -45,7 +45,6 @@ public class ClientLink extends Link {
 			} catch (SocketTimeoutException e) {
 				System.out.println("ErrorSimulator ClientLink timed out");
 				e.printStackTrace();
-				System.exit(1);
 			}
 			
 			clientAddress = dpClient.getAddress();
@@ -72,7 +71,6 @@ public class ClientLink extends Link {
 				} catch (SocketTimeoutException e) {
 					System.out.println("ErrorSimulator ClientLink badConnector timed out");
 					e.printStackTrace();
-					System.exit(1);
 				}
 			}
 			handleSending(serverConnector, sendPacket);
