@@ -30,7 +30,7 @@ public class NetworkConnector {
 		DatagramPacket receivePacket = new DatagramPacket(data, data.length);
 		try {
 			if (Config.PRINT_PACKETS) {
-				System.out.print("\nWaiting to receive a packet...\n");
+				//System.out.print("\nWaiting to receive a packet...\n");
 			}
 			socket.receive(receivePacket);
 		} catch (IOException e) {

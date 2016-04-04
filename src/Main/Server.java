@@ -28,7 +28,7 @@ public class Server {
 
 	// may or may not need this, will look further into this
 	public Server() {
-		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, false);
+		networkConnector = new NetworkConnector(Config.SERVER_PORT, true, true);
 		shutdownHandler  = new ShutdownHandler();
 	}
 	
@@ -50,10 +50,12 @@ public class Server {
 					datagramPacket = networkConnector.receive();
 					break;
 				} catch (SocketTimeoutException e) {
-					System.out.println("Server main thread timed out");
-					//e.printStackTrace();
-					if (num_transmit_attempts >= Config.MAX_TRANSMITS){
-						return;
+					if (!isRunning) {
+						if (num_transmit_attempts >= Config.MAX_TRANSMITS){
+							return;
+						}
+					} else {
+						//
 					}
 				}
 			}
@@ -228,16 +230,20 @@ public class Server {
 		@Override
 		public void run() {
 			// read and normalize input
-			String input = scanner.nextLine().trim(); 
-			String normalizedInput = input.toLowerCase();
-			// take action based on input
-			if (normalizedInput.startsWith("shutdown")) {
-				System.out.println("Shutting down receive socket.");
-				networkConnector.close();
-			} else if (normalizedInput.length() > 0) {
-				System.out.println("Command not recognized: " + input);
+			boolean done = false;
+			while (!done) {
+				String input = scanner.nextLine().trim(); 
+				String normalizedInput = input.toLowerCase();
+				// take action based on input
+				if (normalizedInput.startsWith("shutdown")) {
+					System.out.println("Shutting down receive socket.");
+					isRunning = false;
+					networkConnector.close();
+					done = true;
+				} else if (normalizedInput.length() > 0) {
+					System.out.println("Command not recognized: " + input);
+				}
 			}
-			isRunning = false;
 		}
 	}
 }
